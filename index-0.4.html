@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pilot Preflight Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #0f1722;
+            --card-bg: #1a2737;
+            --text-main: #e2e8f0;
+            --accent-blue: #38bdf8;
+            --green-pass: #22c55e;
+            --red-fail: #ef4444;
+            --yellow-warn: #eab308;
+            --border-color: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--text-main);
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h2 {
+            font-size: 0.9rem;
+            color: var(--accent-blue);
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dashboard-container { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; }
+        .top-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        
+        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); }
+        .smart-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; position: relative; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); }
+        
+        .edit-btn { position: absolute; top: 15px; right: 15px; background: var(--accent-blue); color: #000; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+        .edit-btn:hover { background: #7dd3fc; }
+        .hidden { display: none !important; }
+        
+        .edit-form label { display: block; margin-top: 10px; font-size: 0.85rem; color: #94a3b8; }
+        .edit-form input { width: 100%; padding: 8px; margin-top: 5px; background: #0f172a; border: 1px solid var(--border-color); color: white; border-radius: 4px; box-sizing: border-box;}
+        .save-btn { width: 100%; background: var(--green-pass); color: white; border: none; padding: 10px; margin-top: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .save-btn:hover { background: #16a34a; }
+
+        .min-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .min-row:last-child { border-bottom: none; }
+        .min-data span { display: block; font-size: 0.8rem; color: #94a3b8; }
+        
+        .badge { padding: 5px 15px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; }
+        .badge.go { background-color: var(--green-pass); color: white; }
+        .badge.nogo { background-color: var(--red-fail); color: white; }
+
+        .master-decision { display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #7f1d1d, #ef4444); border: 2px solid #b91c1c; border-radius: 8px; color: white; text-align: center; transition: all 0.3s ease; }
+        .master-decision h2 { color: white; margin-bottom: 5px; font-size: 1rem; border: none; }
+        .master-decision .status { font-size: 3.5rem; font-weight: 900; line-height: 1; margin: 0; }
+
+        .risk-grid { display: grid; grid-template-columns: auto repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background-color: var(--border-color); border: 1px solid var(--border-color); }
+        .risk-cell { background-color: var(--card-bg); height: 30px; display: flex; justify-content: center; align-items: center; font-size: 0.7rem; color: #000; }
+        .risk-label { background-color: transparent; color: var(--text-main); transform: rotate(-90deg); grid-row: span 3; height: 100px; width: 20px;}
+        .bg-green { background-color: var(--green-pass); }
+        .bg-yellow { background-color: var(--yellow-warn); }
+        .bg-red { background-color: var(--red-fail); }
+
+        .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .weather-section { display: flex; flex-direction: column; gap: 15px
