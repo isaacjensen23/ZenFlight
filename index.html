@@ -25,14 +25,46 @@
             box-sizing: border-box;
         }
 
-        h1 {
-            color: var(--text-main);
-            font-size: 1.5rem;
-            margin-bottom: 20px;
+        /* --- NEW: Global Search Bar Styling --- */
+        .global-search-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
+        }
+        .global-search-container input {
+            background-color: #0f172a;
+            border: 2px solid var(--accent-blue);
+            color: white;
+            padding: 12px 25px;
+            font-size: 1.5rem;
+            border-radius: 30px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            width: 250px;
+            text-align: center;
+            outline: none;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+        .global-search-container button {
+            background-color: var(--accent-blue);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 900;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        .global-search-container button:hover {
+            background-color: #7dd3fc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(56, 189, 248, 0.4);
         }
 
         h2 {
@@ -97,14 +129,17 @@
 </head>
 <body>
 
-<h1>Pilot Preflight Dashboard</h1>
+<div class="global-search-container">
+    <input type="text" id="global-icao" placeholder="ICAO (e.g. KJFK)" maxlength="4" onkeypress="handleEnter(event)">
+    <button onclick="searchNewAirport()">Search Airport</button>
+</div>
 
 <div class="dashboard-container">
     
     <div class="top-row">
         <div class="smart-card" id="mins-card">
             <h2>Personal Minimums <span id="display-icao" style="color:white; margin-left:10px;">KJFK</span></h2>
-            <button class="edit-btn" onclick="toggleEdit()">EDIT</button>
+            <button class="edit-btn" onclick="toggleEdit()">EDIT MINS</button>
         
             <div id="display-mode">
                 <div class="min-row">
@@ -124,9 +159,6 @@
             </div>
         
             <div id="edit-mode" class="edit-form hidden">
-                <label>Airport ICAO (e.g., KJFK):
-                    <input type="text" id="input-icao" maxlength="4" style="text-transform:uppercase;">
-                </label>
                 <label>Planned Runway (e.g., 04, 22):
                     <input type="number" id="input-rwy" min="1" max="36">
                 </label>
@@ -139,7 +171,7 @@
                 <label>Max Crosswind (kts):
                     <input type="number" id="input-xwind">
                 </label>
-                <button class="save-btn" onclick="saveSettings()">SAVE & CHECK</button>
+                <button class="save-btn" onclick="saveSettings()">SAVE MINIMUMS</button>
             </div>
         </div>
 
@@ -172,7 +204,7 @@
         <div class="weather-section">
             <div class="card">
                 <h2>Live Weather (METAR/TAF) - <span id="airport-code">KJFK</span></h2>
-                <div id="metar-box" class="metar-display">Connecting to AviationWeather API...</div>
+                <div id="metar-box" class="metar-display">Waiting for search...</div>
             </div>
 
             <div class="card">
@@ -199,7 +231,7 @@
                     </a>
                 </div>
             </h2>
-            <iframe class="radar-frame" src="https://globe.adsbexchange.com/?lat=40.64&lon=-73.77&zoom=10"></iframe>
+            <iframe id="adsb-iframe" class="radar-frame" src="https://globe.adsbexchange.com/?lat=40.64&lon=-73.77&zoom=11"></iframe>
         </div>
     </div>
 
@@ -214,12 +246,38 @@
         maxXwind: 10
     };
 
+    // --- NEW: Global Search Functions ---
+    function handleEnter(e) {
+        if (e.key === 'Enter') searchNewAirport();
+    }
+
+    function searchNewAirport() {
+        const inputField = document.getElementById('global-icao');
+        let newIcao = inputField.value.trim().toUpperCase();
+        
+        if (newIcao.length >= 3) {
+            userSettings.icao = newIcao;
+            localStorage.setItem('pilotMinimums', JSON.stringify(userSettings));
+            
+            // Update UI strings instantly
+            document.getElementById('display-icao').innerText = userSettings.icao;
+            document.getElementById('airport-code').innerText = userSettings.icao;
+            document.getElementById('atis-link').href = `https://www.liveatc.net/search/?icao=${userSettings.icao}`;
+            
+            // Trigger API fetches
+            checkMinimums();
+            getRawWeather();
+        } else {
+            alert("Please enter a valid 3 or 4 letter airport code.");
+        }
+    }
+
+    // --- Existing UI Functions ---
     function toggleEdit() {
         document.getElementById('display-mode').classList.add('hidden');
         document.querySelector('.edit-btn').classList.add('hidden');
         document.getElementById('edit-mode').classList.remove('hidden');
         
-        document.getElementById('input-icao').value = userSettings.icao;
         document.getElementById('input-rwy').value = userSettings.rwy < 10 ? '0'+userSettings.rwy : userSettings.rwy;
         document.getElementById('input-wind').value = userSettings.maxWind;
         document.getElementById('input-ceil').value = userSettings.minCeil;
@@ -227,13 +285,10 @@
     }
 
     function saveSettings() {
-        userSettings = {
-            icao: document.getElementById('input-icao').value.toUpperCase(),
-            rwy: parseInt(document.getElementById('input-rwy').value),
-            maxWind: parseInt(document.getElementById('input-wind').value),
-            minCeil: parseInt(document.getElementById('input-ceil').value),
-            maxXwind: parseInt(document.getElementById('input-xwind').value)
-        };
+        userSettings.rwy = parseInt(document.getElementById('input-rwy').value) || 4;
+        userSettings.maxWind = parseInt(document.getElementById('input-wind').value) || 20;
+        userSettings.minCeil = parseInt(document.getElementById('input-ceil').value) || 1500;
+        userSettings.maxXwind = parseInt(document.getElementById('input-xwind').value) || 10;
         
         localStorage.setItem('pilotMinimums', JSON.stringify(userSettings));
         
@@ -243,10 +298,10 @@
         
         updateUI();
         checkMinimums();
-        getRawWeather();
     }
 
     function updateUI() {
+        document.getElementById('global-icao').value = userSettings.icao;
         document.getElementById('display-icao').innerText = userSettings.icao;
         document.getElementById('airport-code').innerText = userSettings.icao;
         document.getElementById('display-rwy').innerText = userSettings.rwy < 10 ? '0'+userSettings.rwy : userSettings.rwy;
@@ -270,24 +325,23 @@
         el.className = isGo ? "badge go" : "badge nogo";
     }
 
-    // Direct fetch - No Proxy needed for GitHub Pages
+    // --- Weather Fetching ---
     async function getRawWeather() {
         try {
-            // Fetch raw text for the display box
+            document.getElementById('metar-box').innerText = `Loading data for ${userSettings.icao}...`;
             const url = `https://aviationweather.gov/api/data/metar?ids=${userSettings.icao}&format=raw&hours=2`;
             const response = await fetch(url);
             
-            if (!response.ok) throw new Error("API Connection Failed");
+            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
             
             const data = await response.text();
-            document.getElementById('metar-box').innerText = data || "No reports found for this airport in the last 2 hours.";
+            document.getElementById('metar-box').innerText = data || `No METAR reports found for ${userSettings.icao} in the last 2 hours.`;
             
         } catch (e) {
-            document.getElementById('metar-box').innerText = "Failed to load weather data. Check your connection or the airport code.";
+            document.getElementById('metar-box').innerText = `Data Error: Could not connect to AviationWeather.gov.\n\nNote: If you have an AdBlocker, privacy shield (like Brave), or tracking blocker installed, it may be preventing this webpage from downloading the live weather data in the background. Try disabling it for this site.`;
         }
     }
 
-    // Direct fetch for JSON parsing
     async function checkMinimums() {
         document.getElementById('error-message').innerText = ""; 
         try {
@@ -295,9 +349,14 @@
             const response = await fetch(url);
             const data = await response.json();
 
-            if (!data || data.length === 0) throw new Error("No data. Check ICAO code.");
+            if (!data || data.length === 0) throw new Error("No data found for this airport code.");
             
             const metar = data[0]; 
+
+            // --- AUTO-UPDATE RADAR IF LAT/LON EXISTS ---
+            if (metar.lat && metar.lon) {
+                document.getElementById('adsb-iframe').src = `https://globe.adsbexchange.com/?lat=${metar.lat}&lon=${metar.lon}&zoom=11`;
+            }
 
             // WIND
             const windSpd = metar.wspd || 0;
