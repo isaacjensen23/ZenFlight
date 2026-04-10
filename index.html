@@ -20,10 +20,10 @@
         /* --- Header: Search & Clocks --- */
         .header-container { display: flex; justify-content: center; align-items: center; gap: 30px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
         
-        .clock-box { display: flex; flex-direction: column; align-items: center; background: #0f172a; padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color); min-width: 120px; }
-        .clock-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }
+        .clock-box { display: flex; flex-direction: column; align-items: center; background: #0f172a; padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color); min-width: 160px; }
+        .clock-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; text-align: center;}
         .clock-time { font-size: 1.5rem; font-family: monospace; font-weight: bold; color: var(--accent-blue); }
-        .clock-zulu { color: #facc15; } /* Yellow for Zulu to distinguish */
+        .clock-zulu { color: #facc15; }
 
         .search-box { display: flex; gap: 10px; }
         .search-box input { background-color: #0f172a; border: 2px solid var(--accent-blue); color: white; padding: 12px 20px; font-size: 1.5rem; border-radius: 8px; text-transform: uppercase; width: 180px; text-align: center; outline: none; font-weight: bold; }
@@ -60,11 +60,11 @@
 
         /* COM Stack (LiveATC) */
         .com-stack { display: flex; flex-direction: column; gap: 15px; height: 100%; justify-content: center;}
-        .com-btn { background-color: #0f172a; border: 2px solid var(--accent-blue); color: white; padding: 15px; border-radius: 8px; text-align: center; font-size: 1.1rem; cursor: pointer; text-decoration: none; font-weight: bold; display: block; transition: all 0.2s ease;}
+        .com-btn { background-color: #0f172a; border: 2px solid var(--accent-blue); color: white; padding: 20px; border-radius: 8px; text-align: center; font-size: 1.2rem; cursor: pointer; text-decoration: none; font-weight: bold; display: block; transition: all 0.2s ease;}
         .com-btn:hover { background-color: var(--accent-blue); color: black;}
 
         /* Weather Text */
-        .metar-display { font-family: 'Courier New', Courier, monospace; color: #4ade80; background-color: #0f172a; padding: 15px; border-radius: 4px; font-size: 1rem; white-space: pre-wrap; line-height: 1.5; height: 100px; overflow-y: auto;}
+        .metar-display { font-family: 'Courier New', Courier, monospace; color: #4ade80; background-color: #0f172a; padding: 15px; border-radius: 4px; font-size: 1rem; white-space: pre-wrap; line-height: 1.5; min-height: 50px;}
 
         /* Iframes */
         .radar-frame { width: 100%; height: 500px; border: none; border-radius: 4px; }
@@ -75,7 +75,7 @@
 
 <div class="header-container">
     <div class="clock-box">
-        <span class="clock-label">Local Time</span>
+        <span class="clock-label" id="local-clock-title">YOUR LOCAL TIME</span>
         <span class="clock-time" id="clock-local">00:00:00</span>
     </div>
 
@@ -85,7 +85,7 @@
     </div>
 
     <div class="clock-box">
-        <span class="clock-label">Zulu Time (UTC)</span>
+        <span class="clock-label">ZULU TIME (UTC)</span>
         <span class="clock-time clock-zulu" id="clock-zulu">00:00:00 Z</span>
     </div>
 </div>
@@ -139,8 +139,8 @@
     </div>
 
     <div class="card" style="margin-bottom: 20px;">
-        <h2>RAW METAR TEXT</h2>
-        <div id="metar-box" class="metar-display">Loading aviation weather data...</div>
+        <h2>RAW METAR TEXT <span id="fetch-status" style="font-size: 0.7rem; float:right; color: #94a3b8;"></span></h2>
+        <div id="metar-box" class="metar-display">Waiting for secure connection...</div>
     </div>
 
     <div class="mid-row">
@@ -157,24 +157,7 @@
 </div>
 
 <script>
-    // --- 1. CLOCK LOGIC ---
-    function updateClocks() {
-        const now = new Date();
-        
-        // Local Time (Browser's Timezone)
-        const localTimeStr = now.toLocaleTimeString('en-US', { hour12: false });
-        document.getElementById('clock-local').innerText = localTimeStr;
-        
-        // Zulu Time (UTC)
-        const zuluHours = String(now.getUTCHours()).padStart(2, '0');
-        const zuluMins = String(now.getUTCMinutes()).padStart(2, '0');
-        const zuluSecs = String(now.getUTCSeconds()).padStart(2, '0');
-        document.getElementById('clock-zulu').innerText = `${zuluHours}:${zuluMins}:${zuluSecs} Z`;
-    }
-    setInterval(updateClocks, 1000);
-    updateClocks(); // Run immediately
-
-    // --- 2. SETTINGS & LOGIC ---
+    // --- 1. SETTINGS & STATE LOGIC ---
     let userSettings = JSON.parse(localStorage.getItem('pilotMinimums')) || { 
         icao: 'KJFK', 
         rwy: 4, 
@@ -183,6 +166,32 @@
         maxXwind: 10
     };
 
+    // This variable holds the target airport's timezone (defaults to system local time)
+    let currentAirportTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // --- 2. CLOCK LOGIC ---
+    function updateClocks() {
+        const now = new Date();
+        
+        // Local Time (Dynamically shifts to airport timezone when searched)
+        try {
+            const localTimeStr = now.toLocaleTimeString('en-US', { timeZone: currentAirportTZ, hour12: false });
+            document.getElementById('clock-local').innerText = localTimeStr;
+        } catch (e) {
+            // Fallback if timezone string is invalid
+            document.getElementById('clock-local').innerText = now.toLocaleTimeString('en-US', { hour12: false });
+        }
+        
+        // Zulu Time (Always UTC)
+        const zuluHours = String(now.getUTCHours()).padStart(2, '0');
+        const zuluMins = String(now.getUTCMinutes()).padStart(2, '0');
+        const zuluSecs = String(now.getUTCSeconds()).padStart(2, '0');
+        document.getElementById('clock-zulu').innerText = `${zuluHours}:${zuluMins}:${zuluSecs} Z`;
+    }
+    setInterval(updateClocks, 1000);
+    updateClocks(); 
+
+    // --- 3. UI FUNCTIONS ---
     function handleEnter(e) { if (e.key === 'Enter') searchNewAirport(); }
 
     function searchNewAirport() {
@@ -191,8 +200,8 @@
             userSettings.icao = newIcao;
             localStorage.setItem('pilotMinimums', JSON.stringify(userSettings));
             updateUI();
-            checkWeather(); // Single function call now
-        } else { alert("Enter a valid ICAO."); }
+            checkWeather(); 
+        } else { alert("Enter a valid ICAO code."); }
     }
 
     function toggleEdit() {
@@ -244,89 +253,40 @@
         el.className = isGo ? "badge go" : "badge nogo";
     }
 
-    // --- 3. THE SINGLE MASTER WEATHER FETCH ---
-    async function checkWeather() {
-        document.getElementById('metar-box').innerText = `Fetching secure data for ${userSettings.icao}...`;
-        
+    // --- 4. TIMEZONE FETCH ENGINE ---
+    async function updateAirportTimezone(lat, lon) {
         try {
-            // We ONLY fetch the JSON endpoint now. It contains both data and the raw text.
-            const targetUrl = `https://aviationweather.gov/api/data/metar?ids=${userSettings.icao}&format=json`;
-            const response = await fetch(targetUrl);
-            const data = await response.json();
+            // Open-Meteo has incredibly reliable, free CORS access for Timezone mapping
+            const tzUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`;
+            const res = await fetch(tzUrl);
+            const data = await res.json();
             
-            if (!data || data.length === 0) throw new Error("No data found for this airport.");
-            
-            const metar = data[0]; 
-
-            // 1. UPDATE RAW METAR TEXT BOX
-            document.getElementById('metar-box').innerText = metar.rawOb || "Raw text not available in response.";
-
-            // 2. CENTER ADS-B EXCHANGE MAP
-            if (metar.lat && metar.lon) {
-                document.getElementById('adsb-iframe').src = `https://globe.adsbexchange.com/?lat=${metar.lat}&lon=${metar.lon}&zoom=11`;
+            if(data.timezone) {
+                currentAirportTZ = data.timezone;
+                document.getElementById('local-clock-title').innerText = `${userSettings.icao} LOCAL TIME`;
+                document.getElementById('local-clock-title').style.color = "var(--green-pass)";
+                updateClocks();
             }
-
-            // 3. MINIMUMS CALCULATION
-            // Wind
-            const windSpd = metar.wspd || 0;
-            const windGust = metar.wgst || 0;
-            const maxReportedWind = Math.max(windSpd, windGust);
-            document.getElementById('live-wind').innerText = `${windSpd} kt` + (windGust > 0 ? ` G${windGust}` : '');
-            let isWindGo = maxReportedWind <= userSettings.maxWind;
-            setBadge('badge-wind', isWindGo);
-
-            // Crosswind
-            const windDir = metar.wdir || null;
-            let crosswind = calculateCrosswind(windDir, maxReportedWind, userSettings.rwy); 
-            document.getElementById('live-xwind').innerText = windDir ? `${crosswind} kt` : 'VRB';
-            let isXwindGo = crosswind <= userSettings.maxXwind;
-            setBadge('badge-xwind', isXwindGo);
-
-            // Ceiling
-            let ceilingValue = 99999; 
-            if (metar.clouds) {
-                for (let layer of metar.clouds) {
-                    if (['BKN', 'OVC', 'VV'].includes(layer.cover)) {
-                        ceilingValue = layer.base || 0;
-                        break; 
-                    }
-                }
-            }
-            document.getElementById('live-ceil').innerText = ceilingValue === 99999 ? "Unlimited" : `${ceilingValue} ft`;
-            let isCeilGo = ceilingValue >= userSettings.minCeil;
-            setBadge('badge-ceil', isCeilGo);
-
-            // 4. MASTER STATUS UPDATE
-            const masterGo = isWindGo && isXwindGo && isCeilGo;
-            const mText = document.querySelector('.master-decision .status');
-            const mBox = document.querySelector('.master-decision');
-
-            if (masterGo) {
-                mText.innerText = "GO";
-                mBox.style.background = "linear-gradient(135deg, #14532d, #22c55e)";
-                mBox.style.borderColor = "#16a34a";
-            } else {
-                mText.innerText = "NO-GO";
-                mBox.style.background = "linear-gradient(135deg, #7f1d1d, #ef4444)";
-                mBox.style.borderColor = "#b91c1c";
-            }
-            document.getElementById('metar-time').innerText = `Report Time: ${metar.obsTime || 'Unknown'}`;
-
-        } catch (error) {
-            console.error(error);
-            document.getElementById('metar-box').innerText = `Error: ${error.message}\nPlease verify the ICAO code.`;
-            document.getElementById('live-wind').innerText = "--"; document.getElementById('live-ceil').innerText = "--"; document.getElementById('live-xwind').innerText = "--";
-            document.querySelector('.master-decision .status').innerText = "NO-GO";
-            document.querySelector('.master-decision').style.background = "linear-gradient(135deg, #7f1d1d, #ef4444)";
+        } catch (e) {
+            console.log("Timezone fetch failed. Leaving as system local.");
         }
     }
 
-    // Initialize on page load
-    updateUI(); 
-    checkWeather(); 
-    
-    // Refresh every 5 minutes
-    setInterval(checkWeather, 300000); 
-</script>
-</body>
-</html>
+    // --- 5. THE BULLETPROOF WEATHER FETCH ---
+    async function checkWeather() {
+        document.getElementById('metar-box').innerText = `Fetching secure data for ${userSettings.icao}...`;
+        document.getElementById('fetch-status').innerText = "Connecting...";
+        
+        let targetUrl = `https://aviationweather.gov/api/data/metar?ids=${userSettings.icao}&format=json`;
+        let weatherData = null;
+        
+        try {
+            // STEP 1: Try direct connection first
+            const response = await fetch(targetUrl);
+            if (!response.ok) throw new Error("Network response was not ok");
+            weatherData = await response.json();
+            document.getElementById('fetch-status').innerText = "(Direct Connection)";
+            document.getElementById('fetch-status').style.color = "var(--green-pass)";
+            
+        } catch (e) {
+            // STEP
