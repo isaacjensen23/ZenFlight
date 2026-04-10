@@ -21,7 +21,7 @@
         /* Global Search Bar */
         .global-search-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
         .global-search-container input { background-color: #0f172a; border: 2px solid var(--accent-blue); color: white; padding: 12px 25px; font-size: 1.5rem; border-radius: 30px; text-transform: uppercase; width: 250px; text-align: center; outline: none; font-weight: bold; }
-        .global-search-container button { background-color: var(--accent-blue); color: #000; border: none; padding: 15px 30px; font-size: 1.1rem; font-weight: 900; border-radius: 30px; cursor: pointer; text-transform: uppercase; }
+        .global-search-container button { background-color: var(--accent-blue); color: #000; border: none; padding: 15px 30px; font-size: 1.1rem; font-weight: 900; border-radius: 30px; cursor: pointer; text-transform: uppercase; transition: background 0.2s; }
         .global-search-container button:hover { background-color: #7dd3fc; }
 
         h2 { font-size: 0.9rem; color: var(--accent-blue); margin-top: 0; margin-bottom: 15px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;}
@@ -29,8 +29,9 @@
         .dashboard-container { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; }
         .top-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
         .mid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .bottom-row { display: grid; grid-template-columns: 1fr; gap: 20px; }
         
-        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative; }
         
         /* Personal Minimums */
         .edit-btn { position: absolute; top: 10px; right: 15px; background: var(--accent-blue); color: #000; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
@@ -52,11 +53,13 @@
         .master-decision h2 { color: white; margin-bottom: 5px; font-size: 1rem; border: none; }
         .master-decision .status { font-size: 3.5rem; font-weight: 900; line-height: 1; margin: 0; }
 
-        /* COM Stack (LiveATC) */
+        /* COM Stack (LiveATC Native Player) */
         .com-stack { display: flex; flex-direction: column; gap: 10px; }
-        .com-btn { background-color: #0f172a; border: 1px solid #475569; color: #e2e8f0; padding: 12px; border-radius: 6px; text-align: left; font-family: monospace; font-size: 1.1rem; cursor: pointer; display: flex; justify-content: space-between; transition: background 0.2s; text-decoration: none;}
+        .com-btn { background-color: #0f172a; border: 1px solid #475569; color: var(--accent-blue); padding: 8px; border-radius: 6px; text-align: center; font-size: 0.85rem; cursor: pointer; text-decoration: none; font-weight: bold;}
         .com-btn:hover { background-color: #1e293b; border-color: var(--accent-blue); color: white;}
-        .com-label { color: #94a3b8; font-size: 0.8rem; display: block; margin-bottom: 2px;}
+        .liveatc-setup { display: flex; gap: 5px; margin-top: 10px; }
+        .liveatc-setup input { flex-grow: 1; padding: 8px; background: #0f172a; border: 1px solid var(--border-color); color: white; border-radius: 4px; font-size: 0.8rem;}
+        .liveatc-setup button { background: var(--green-pass); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.8rem;}
 
         /* Risk Matrix */
         .risk-grid { display: grid; grid-template-columns: auto repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background-color: var(--border-color); border: 1px solid var(--border-color); }
@@ -69,14 +72,9 @@
         /* Weather Text */
         .metar-display { font-family: 'Courier New', Courier, monospace; color: #4ade80; background-color: #0f172a; padding: 10px; border-radius: 4px; font-size: 0.95rem; white-space: pre-wrap; line-height: 1.4; height: 130px; overflow-y: auto;}
 
-        /* Graphical Weather Tabs */
-        .tabs { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap;}
-        .tab-btn { background: #334155; border: none; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold;}
-        .tab-btn.active { background: var(--accent-blue); color: black; }
-        .tab-btn:hover:not(.active) { background: #475569; }
-        .weather-frame { width: 100%; height: 450px; border: none; border-radius: 4px; }
-
+        /* Iframes */
         .radar-frame { width: 100%; height: 450px; border: none; border-radius: 4px; }
+        .gfa-frame { width: 100%; height: 600px; border: none; border-radius: 4px; background: #fff; }
     </style>
 </head>
 <body>
@@ -89,7 +87,7 @@
 <div class="dashboard-container">
     
     <div class="top-row">
-        <div class="card" style="position: relative;">
+        <div class="card">
             <h2>Personal Minimums <span id="display-icao" style="color:white; margin-left:10px;">KJFK</span></h2>
             <button class="edit-btn" onclick="toggleEdit()">EDIT MINS</button>
         
@@ -126,16 +124,23 @@
         <div class="card">
             <h2>COMMUNICATIONS (LiveATC)</h2>
             <div class="com-stack">
-                <a href="#" onclick="openLiveATC()" class="com-btn">
-                    <div>
-                        <span class="com-label">COM 1 (Web Player)</span>
-                        LISTEN TO <span class="com-icao-text">KJFK</span>
-                    </div>
-                    <div>▶</div>
-                </a>
+                <audio id="liveatc-audio" controls style="width: 100%; height: 40px; border-radius: 4px;">
+                    <source id="liveatc-source" src="" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+                
                 <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 5px;">
-                    Clicking play will open a small popup to the LiveATC directory for this airport. Select Tower, Ground, or Approach to begin streaming.
+                    Because LiveATC explicitly blocks embedding, you must manually paste the direct stream link (e.g. <i>https://s1.liveatc.net/kjfk_twr</i>) for your airport below.
                 </div>
+                
+                <div class="liveatc-setup">
+                    <input type="text" id="stream-url-input" placeholder="Paste direct LiveATC stream URL here...">
+                    <button onclick="saveLiveAtcUrl()">SAVE</button>
+                </div>
+                
+                <a id="atis-link" href="https://www.liveatc.net/search/?icao=KJFK" target="_blank" class="com-btn">
+                    Step 1: Find your stream on LiveATC.net
+                </a>
             </div>
         </div>
     </div>
@@ -143,11 +148,11 @@
     <div class="mid-row">
         <div class="card">
             <h2>RAW TEXT (METAR/TAF)</h2>
-            <div id="metar-box" class="metar-display">Loading secure data...</div>
+            <div id="metar-box" class="metar-display">Loading direct data...</div>
         </div>
 
         <div class="card">
-            <h2>Risk Matrix</h2>
+            <h2>Risk Matrix Placeholder</h2>
             <div class="risk-grid">
                 <div class="risk-cell risk-label">Alert</div>
                 <div class="risk-cell bg-green"></div><div class="risk-cell bg-yellow">⚠</div><div class="risk-cell bg-red">⚠</div><div class="risk-cell bg-red">⚠</div>
@@ -158,36 +163,30 @@
     </div>
 
     <div class="mid-row">
-        
         <div class="card">
             <h2>LIVE TRAFFIC (ADS-B Exchange)</h2>
             <iframe id="adsb-iframe" class="radar-frame" src="https://globe.adsbexchange.com/?lat=40.64&lon=-73.77&zoom=11"></iframe>
         </div>
 
         <div class="card">
-            <h2>GRAPHICAL WEATHER STATION</h2>
-            <div class="tabs">
-                <button class="tab-btn active" onclick="setWeatherTab('radar', this)">Radar</button>
-                <button class="tab-btn" onclick="setWeatherTab('clouds', this)">Clouds</button>
-                <button class="tab-btn" onclick="setWeatherTab('wind', this)">Winds</button>
-                <button class="tab-btn" onclick="setWeatherTab('temp', this)">Temps</button>
-                <button class="tab-btn" onclick="setWeatherTab('turbu', this)">Turbulence</button>
-                <button class="tab-btn" onclick="setWeatherTab('icing', this)">Icing</button>
+            <h2>AVIATION WEATHER (GFA MAP)</h2>
+            <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 10px;">
+                Use the map layers (top right of the map) to toggle Radar, Clouds, Turbulence, and Icing.
             </div>
-            <iframe id="weather-iframe" class="weather-frame" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=in&metricTemp=%C2%B0F&metricWind=kt&zoom=8&overlay=radar&lat=40.64&lon=-73.77"></iframe>
+            <iframe class="gfa-frame" src="https://aviationweather.gov/gfa/"></iframe>
         </div>
-
     </div>
 </div>
 
 <script>
-    let userSettings = JSON.parse(localStorage.getItem('pilotMinimums')) || { icao: 'KJFK', rwy: 4, maxWind: 20, minCeil: 1500, maxXwind: 10 };
-    let currentLat = 40.64;
-    let currentLon = -73.77;
-    let currentOverlay = 'radar';
-
-    // CORS Proxy configured for massive reliability
-    const CORS_API_URL = 'https://api.allorigins.win/get?url=';
+    let userSettings = JSON.parse(localStorage.getItem('pilotMinimums')) || { 
+        icao: 'KJFK', 
+        rwy: 4, 
+        maxWind: 20, 
+        minCeil: 1500, 
+        maxXwind: 10,
+        streamUrl: ''
+    };
 
     function handleEnter(e) { if (e.key === 'Enter') searchNewAirport(); }
 
@@ -195,6 +194,7 @@
         let newIcao = document.getElementById('global-icao').value.trim().toUpperCase();
         if (newIcao.length >= 3) {
             userSettings.icao = newIcao;
+            userSettings.streamUrl = ''; // Clear stream for new airport
             localStorage.setItem('pilotMinimums', JSON.stringify(userSettings));
             updateUI();
             checkMinimums();
@@ -225,6 +225,27 @@
         updateUI(); checkMinimums();
     }
 
+    // Handle Native Audio Player
+    function saveLiveAtcUrl() {
+        const inputUrl = document.getElementById('stream-url-input').value.trim();
+        userSettings.streamUrl = inputUrl;
+        localStorage.setItem('pilotMinimums', JSON.stringify(userSettings));
+        loadAudioPlayer();
+    }
+
+    function loadAudioPlayer() {
+        const audioEl = document.getElementById('liveatc-audio');
+        const sourceEl = document.getElementById('liveatc-source');
+        if(userSettings.streamUrl) {
+            sourceEl.src = userSettings.streamUrl;
+            audioEl.load();
+            document.getElementById('stream-url-input').value = userSettings.streamUrl;
+        } else {
+            sourceEl.src = '';
+            document.getElementById('stream-url-input').value = '';
+        }
+    }
+
     function updateUI() {
         document.getElementById('global-icao').value = userSettings.icao;
         document.getElementById('display-icao').innerText = userSettings.icao;
@@ -232,30 +253,8 @@
         document.getElementById('set-wind').innerText = userSettings.maxWind;
         document.getElementById('set-ceil').innerText = userSettings.minCeil;
         document.getElementById('set-xwind').innerText = userSettings.maxXwind;
-        document.querySelector('.com-icao-text').innerText = userSettings.icao;
-    }
-
-    // COM Stack logic
-    function openLiveATC() {
-        const url = `https://www.liveatc.net/search/?icao=${userSettings.icao}`;
-        window.open(url, "LiveATC", "width=500,height=600,scrollbars=yes");
-    }
-
-    // Graphical Weather Tab Logic
-    function setWeatherTab(overlay, btnElement) {
-        currentOverlay = overlay;
-        
-        // Update active button styling
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        btnElement.classList.add('active');
-
-        // Update iframe source
-        updateWeatherIframe();
-    }
-
-    function updateWeatherIframe() {
-        const url = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=in&metricTemp=%C2%B0F&metricWind=kt&zoom=8&overlay=${currentOverlay}&lat=${currentLat}&lon=${currentLon}`;
-        document.getElementById('weather-iframe').src = url;
+        document.getElementById('atis-link').href = `https://www.liveatc.net/search/?icao=${userSettings.icao}`;
+        loadAudioPlayer();
     }
 
     function calculateCrosswind(windDir, windSpd, runwayHeading) {
@@ -270,42 +269,36 @@
         el.className = isGo ? "badge go" : "badge nogo";
     }
 
-    // NEW CORS-BYPASS FETCH FOR RAW WEATHER
+    // DIRECT FETCH - NO PROXIES
     async function getRawWeather() {
         try {
-            document.getElementById('metar-box').innerText = `Loading secure data for ${userSettings.icao}...`;
+            document.getElementById('metar-box').innerText = `Loading secure direct data for ${userSettings.icao}...`;
             const targetUrl = `https://aviationweather.gov/api/data/metar?ids=${userSettings.icao}&format=raw&hours=2`;
-            const response = await fetch(CORS_API_URL + encodeURIComponent(targetUrl));
-            const data = await response.json();
             
-            if (data.contents) {
-                document.getElementById('metar-box').innerText = data.contents;
-            } else {
-                document.getElementById('metar-box').innerText = "No reports found for this airport.";
-            }
+            const response = await fetch(targetUrl);
+            if (!response.ok) throw new Error("HTTP Status Error");
+            
+            const data = await response.text();
+            document.getElementById('metar-box').innerText = data || "No reports found for this airport.";
+            
         } catch (e) {
-            document.getElementById('metar-box').innerText = "Error: Could not retrieve data through proxy.";
+            document.getElementById('metar-box').innerText = "Direct connection failed. Please ensure no strict privacy extensions are blocking the request.";
         }
     }
 
-    // NEW CORS-BYPASS FETCH FOR MINIMUMS LOGIC
     async function checkMinimums() {
         try {
             const targetUrl = `https://aviationweather.gov/api/data/metar?ids=${userSettings.icao}&format=json`;
-            const response = await fetch(CORS_API_URL + encodeURIComponent(targetUrl));
-            const proxyData = await response.json();
+            const response = await fetch(targetUrl);
+            const data = await response.json();
             
-            const data = JSON.parse(proxyData.contents);
             if (!data || data.length === 0) throw new Error("No data found.");
             
             const metar = data[0]; 
 
-            // Update Maps Location if coordinates are provided
+            // Center ADS-B Map
             if (metar.lat && metar.lon) {
-                currentLat = metar.lat;
-                currentLon = metar.lon;
-                document.getElementById('adsb-iframe').src = `https://globe.adsbexchange.com/?lat=${currentLat}&lon=${currentLon}&zoom=11`;
-                updateWeatherIframe();
+                document.getElementById('adsb-iframe').src = `https://globe.adsbexchange.com/?lat=${metar.lat}&lon=${metar.lon}&zoom=11`;
             }
 
             // Wind
