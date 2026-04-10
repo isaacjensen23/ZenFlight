@@ -81,4 +81,302 @@
         .bg-red { background-color: var(--red-fail); }
 
         .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .weather-section { display: flex; flex-direction: column; gap: 15px
+        .weather-section { display: flex; flex-direction: column; gap: 15px; }
+        
+        .metar-display { font-family: 'Courier New', Courier, monospace; color: #4ade80; background-color: #0f172a; padding: 10px; border-radius: 4px; font-size: 0.95rem; white-space: pre-wrap; line-height: 1.4; }
+        
+        .graphical-obs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .graphical-obs img { width: 100%; height: 200px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color); }
+
+        .radar-atis-container { display: flex; flex-direction: column; }
+        .atis-header { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+        .atis-play-btn { background-color: var(--accent-blue); color: #000; border: none; padding: 5px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; text-decoration: none;}
+        .atis-play-btn:hover { background-color: #7dd3fc; }
+        .radar-frame { width: 100%; height: 400px; border: none; border-radius: 4px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<h1>Pilot Preflight Dashboard</h1>
+
+<div class="dashboard-container">
+    
+    <div class="top-row">
+        <div class="smart-card" id="mins-card">
+            <h2>Personal Minimums <span id="display-icao" style="color:white; margin-left:10px;">KJFK</span></h2>
+            <button class="edit-btn" onclick="toggleEdit()">EDIT</button>
+        
+            <div id="display-mode">
+                <div class="min-row">
+                    <div class="min-data">Wind: <span id="live-wind">--</span> <span>(MAX: <span id="set-wind">20</span> kts)</span></div>
+                    <div id="badge-wind" class="badge">--</div>
+                </div>
+                <div class="min-row">
+                    <div class="min-data">Ceiling: <span id="live-ceil">--</span> <span>(MIN: <span id="set-ceil">1500</span> ft)</span></div>
+                    <div id="badge-ceil" class="badge">--</div>
+                </div>
+                <div class="min-row">
+                    <div class="min-data">Crosswind: <span id="live-xwind">--</span> <span>(MAX: <span id="set-xwind">10</span> kts)</span><br><span style="font-size:0.7rem;">Rwy: <span id="display-rwy">04</span></span></div>
+                    <div id="badge-xwind" class="badge">--</div>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.75rem; color: #aaa;" id="metar-time"></div>
+                <div style="margin-top: 5px; font-size: 0.75rem; color: var(--red-fail);" id="error-message"></div>
+            </div>
+        
+            <div id="edit-mode" class="edit-form hidden">
+                <label>Airport ICAO (e.g., KJFK):
+                    <input type="text" id="input-icao" maxlength="4" style="text-transform:uppercase;">
+                </label>
+                <label>Planned Runway (e.g., 04, 22):
+                    <input type="number" id="input-rwy" min="1" max="36">
+                </label>
+                <label>Max Wind / Gust (kts):
+                    <input type="number" id="input-wind">
+                </label>
+                <label>Minimum Ceiling (ft):
+                    <input type="number" id="input-ceil" step="100">
+                </label>
+                <label>Max Crosswind (kts):
+                    <input type="number" id="input-xwind">
+                </label>
+                <button class="save-btn" onclick="saveSettings()">SAVE & CHECK</button>
+            </div>
+        </div>
+
+        <div class="master-decision">
+            <h2>MASTER GO / NO-GO</h2>
+            <p class="status">NO-GO</p>
+        </div>
+
+        <div class="card">
+            <h2>Risk Management</h2>
+            <div class="risk-grid">
+                <div class="risk-cell risk-label">Alert</div>
+                <div class="risk-cell bg-green"></div>
+                <div class="risk-cell bg-yellow">⚠</div>
+                <div class="risk-cell bg-red">⚠</div>
+                <div class="risk-cell bg-red">⚠</div>
+                <div class="risk-cell bg-green"></div>
+                <div class="risk-cell bg-green"></div>
+                <div class="risk-cell bg-yellow">⚠</div>
+                <div class="risk-cell bg-yellow"></div>
+                <div class="risk-cell bg-green"></div>
+                <div class="risk-cell bg-green"></div>
+                <div class="risk-cell bg-green"></div>
+                <div class="risk-cell bg-yellow"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-row">
+        <div class="weather-section">
+            <div class="card">
+                <h2>Live Weather (METAR/TAF) - <span id="airport-code">KJFK</span></h2>
+                <div id="metar-box" class="metar-display">Connecting to AviationWeather API...</div>
+            </div>
+
+            <div class="card">
+                <h2>Graphical Observations</h2>
+                <div class="graphical-obs">
+                    <div>
+                        <span style="font-size: 0.8rem; color: #94a3b8;">Visible (NEXRAD)</span>
+                        <img src="https://radar.weather.gov/ridge/standard/CONUS_loop.gif" alt="Live Radar Loop">
+                    </div>
+                    <div>
+                        <span style="font-size: 0.8rem; color: #94a3b8;">Interactive Satellite</span>
+                        <img src="https://cdn.star.nesdis.noaa.gov/GOES16/ABI/CONUS/GEOCOLOR/625x375.jpg" alt="Live Satellite">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card radar-atis-container">
+            <h2>
+                LIVE RADAR (ADS-B Exchange)
+                <div class="atis-header">
+                    <a href="https://www.liveatc.net/search/?icao=KJFK" target="_blank" class="atis-play-btn" id="atis-link">
+                        ▶ LiveATC
+                    </a>
+                </div>
+            </h2>
+            <iframe class="radar-frame" src="https://globe.adsbexchange.com/?lat=40.64&lon=-73.77&zoom=10"></iframe>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let userSettings = JSON.parse(localStorage.getItem('pilotMinimums')) || {
+        icao: 'KJFK',
+        rwy: 4,
+        maxWind: 20,
+        minCeil: 1500,
+        maxXwind: 10
+    };
+
+    function toggleEdit() {
+        document.getElementById('display-mode').classList.add('hidden');
+        document.querySelector('.edit-btn').classList.add('hidden');
+        document.getElementById('edit-mode').classList.remove('hidden');
+        
+        document.getElementById('input-icao').value = userSettings.icao;
+        document.getElementById('input-rwy').value = userSettings.rwy < 10 ? '0'+userSettings.rwy : userSettings.rwy;
+        document.getElementById('input-wind').value = userSettings.maxWind;
+        document.getElementById('input-ceil').value = userSettings.minCeil;
+        document.getElementById('input-xwind').value = userSettings.maxXwind;
+    }
+
+    function saveSettings() {
+        userSettings = {
+            icao: document.getElementById('input-icao').value.toUpperCase(),
+            rwy: parseInt(document.getElementById('input-rwy').value),
+            maxWind: parseInt(document.getElementById('input-wind').value),
+            minCeil: parseInt(document.getElementById('input-ceil').value),
+            maxXwind: parseInt(document.getElementById('input-xwind').value)
+        };
+        
+        localStorage.setItem('pilotMinimums', JSON.stringify(userSettings));
+        
+        document.getElementById('edit-mode').classList.add('hidden');
+        document.getElementById('display-mode').classList.remove('hidden');
+        document.querySelector('.edit-btn').classList.remove('hidden');
+        
+        updateUI();
+        checkMinimums();
+        getRawWeather();
+    }
+
+    function updateUI() {
+        document.getElementById('display-icao').innerText = userSettings.icao;
+        document.getElementById('airport-code').innerText = userSettings.icao;
+        document.getElementById('display-rwy').innerText = userSettings.rwy < 10 ? '0'+userSettings.rwy : userSettings.rwy;
+        document.getElementById('set-wind').innerText = userSettings.maxWind;
+        document.getElementById('set-ceil').innerText = userSettings.minCeil;
+        document.getElementById('set-xwind').innerText = userSettings.maxXwind;
+        document.getElementById('atis-link').href = `https://www.liveatc.net/search/?icao=${userSettings.icao}`;
+    }
+
+    function calculateCrosswind(windDir, windSpd, runwayHeading) {
+        if (!windDir || !windSpd || windDir === 0 || windSpd === 0) return 0; 
+        let rwyDeg = runwayHeading * 10; 
+        let angle = Math.abs(windDir - rwyDeg);
+        let radians = angle * (Math.PI / 180);
+        return Math.abs(Math.round(Math.sin(radians) * windSpd));
+    }
+
+    function setBadge(elementId, isGo) {
+        const el = document.getElementById(elementId);
+        el.innerText = isGo ? "GO" : "NO-GO";
+        el.className = isGo ? "badge go" : "badge nogo";
+    }
+
+    // Direct fetch - No Proxy needed for GitHub Pages
+    async function getRawWeather() {
+        try {
+            // Fetch raw text for the display box
+            const url = `https://aviationweather.gov/api/data/metar?ids=${userSettings.icao}&format=raw&hours=2`;
+            const response = await fetch(url);
+            
+            if (!response.ok) throw new Error("API Connection Failed");
+            
+            const data = await response.text();
+            document.getElementById('metar-box').innerText = data || "No reports found for this airport in the last 2 hours.";
+            
+        } catch (e) {
+            document.getElementById('metar-box').innerText = "Failed to load weather data. Check your connection or the airport code.";
+        }
+    }
+
+    // Direct fetch for JSON parsing
+    async function checkMinimums() {
+        document.getElementById('error-message').innerText = ""; 
+        try {
+            const url = `https://aviationweather.gov/api/data/metar?ids=${userSettings.icao}&format=json`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (!data || data.length === 0) throw new Error("No data. Check ICAO code.");
+            
+            const metar = data[0]; 
+
+            // WIND
+            const windSpd = metar.wspd || 0;
+            const windGust = metar.wgst || 0;
+            const maxReportedWind = Math.max(windSpd, windGust);
+            
+            let windText = `${windSpd} kts`;
+            if (windGust > 0) windText += ` gust ${windGust}`;
+            document.getElementById('live-wind').innerText = windText;
+            
+            let isWindGo = maxReportedWind <= userSettings.maxWind;
+            setBadge('badge-wind', isWindGo);
+
+            // CROSSWIND
+            const windDir = metar.wdir || null;
+            let crosswind = calculateCrosswind(windDir, maxReportedWind, userSettings.rwy); 
+            
+            document.getElementById('live-xwind').innerText = windDir ? `${crosswind} kts` : 'Calm/VRB';
+            let isXwindGo = crosswind <= userSettings.maxXwind;
+            setBadge('badge-xwind', isXwindGo);
+
+            // CEILING
+            let ceiling = "Unlimited";
+            let ceilingValue = 99999; 
+            
+            if (metar.clouds) {
+                for (let layer of metar.clouds) {
+                    if (layer.cover === 'BKN' || layer.cover === 'OVC' || layer.cover === 'VV') {
+                        ceilingValue = layer.base || 0;
+                        ceiling = `${ceilingValue} ft`;
+                        break; 
+                    }
+                }
+            }
+            
+            document.getElementById('live-ceil').innerText = ceiling;
+            let isCeilGo = ceilingValue >= userSettings.minCeil;
+            setBadge('badge-ceil', isCeilGo);
+
+            // MASTER DECISION
+            const masterGo = isWindGo && isXwindGo && isCeilGo;
+            const masterStatusText = document.querySelector('.master-decision .status');
+            const masterDecisionBox = document.querySelector('.master-decision');
+
+            if (masterGo) {
+                masterStatusText.innerText = "GO";
+                masterDecisionBox.style.background = "linear-gradient(135deg, #14532d, #22c55e)";
+                masterDecisionBox.style.borderColor = "#16a34a";
+            } else {
+                masterStatusText.innerText = "NO-GO";
+                masterDecisionBox.style.background = "linear-gradient(135deg, #7f1d1d, #ef4444)";
+                masterDecisionBox.style.borderColor = "#b91c1c";
+            }
+
+            document.getElementById('metar-time').innerText = `Report Time: ${metar.obsTime || 'Unknown'}`;
+
+        } catch (error) {
+            console.error(error);
+            document.getElementById('live-wind').innerText = "--";
+            document.getElementById('live-ceil').innerText = "--";
+            document.getElementById('live-xwind').innerText = "--";
+            document.getElementById('error-message').innerText = `Error: ${error.message}`;
+            
+            document.querySelector('.master-decision .status').innerText = "NO-GO";
+            document.querySelector('.master-decision').style.background = "linear-gradient(135deg, #7f1d1d, #ef4444)";
+        }
+    }
+
+    // Run on startup
+    updateUI();
+    checkMinimums();
+    getRawWeather();
+    
+    // Refresh every 5 minutes
+    setInterval(() => {
+        checkMinimums();
+        getRawWeather();
+    }, 300000); 
+</script>
+
+</body>
+</html>
