@@ -6,20 +6,14 @@
     <title>Pilot Preflight Dashboard</title>
     <style>
         :root {
-            --bg-color: #0f1722;
-            --card-bg: #1a2737;
-            --text-main: #e2e8f0;
-            --accent-blue: #38bdf8;
-            --green-pass: #22c55e;
-            --red-fail: #ef4444;
-            --border-color: #334155;
+            --bg-color: #0f1722; --card-bg: #1a2737; --text-main: #e2e8f0;
+            --accent-blue: #38bdf8; --green-pass: #22c55e; --red-fail: #ef4444; --border-color: #334155;
         }
 
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; box-sizing: border-box; }
 
-        /* --- Header: Search & Clocks --- */
+        /* Header & Search */
         .header-container { display: flex; justify-content: center; align-items: center; gap: 30px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
-        
         .clock-box { display: flex; flex-direction: column; align-items: center; background: #0f172a; padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color); min-width: 160px; }
         .clock-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; text-align: center;}
         .clock-time { font-size: 1.5rem; font-family: monospace; font-weight: bold; color: var(--accent-blue); }
@@ -32,10 +26,10 @@
 
         h2 { font-size: 0.9rem; color: var(--accent-blue); margin-top: 0; margin-bottom: 15px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;}
 
+        /* Grid Layout */
         .dashboard-container { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; }
         .top-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
         .mid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        
         .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative; }
         
         /* Personal Minimums */
@@ -53,12 +47,12 @@
         .badge.go { background-color: var(--green-pass); color: white; }
         .badge.nogo { background-color: var(--red-fail); color: white; }
 
-        /* Master GO/NO-GO */
+        /* Master Decision */
         .master-decision { display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #7f1d1d, #ef4444); border: 2px solid #b91c1c; border-radius: 8px; color: white; text-align: center; }
         .master-decision h2 { color: white; margin-bottom: 5px; font-size: 1rem; border: none; }
         .master-decision .status { font-size: 3.5rem; font-weight: 900; line-height: 1; margin: 0; }
 
-        /* COM Stack (LiveATC) */
+        /* COM Stack */
         .com-stack { display: flex; flex-direction: column; gap: 15px; height: 100%; justify-content: center;}
         .com-btn { background-color: #0f172a; border: 2px solid var(--accent-blue); color: white; padding: 20px; border-radius: 8px; text-align: center; font-size: 1.2rem; cursor: pointer; text-decoration: none; font-weight: bold; display: block; transition: all 0.2s ease;}
         .com-btn:hover { background-color: var(--accent-blue); color: black;}
@@ -114,7 +108,7 @@
             </div>
         
             <div id="edit-mode" class="edit-form hidden">
-                <label>Planned Runway (e.g., 04, 22): <input type="number" id="input-rwy" min="1" max="36"></label>
+                <label>Planned Runway (e.g., 04): <input type="number" id="input-rwy" min="1" max="36"></label>
                 <label>Max Wind (kts): <input type="number" id="input-wind"></label>
                 <label>Min Ceiling (ft): <input type="number" id="input-ceil" step="100"></label>
                 <label>Max Crosswind (kts): <input type="number" id="input-xwind"></label>
@@ -124,169 +118,3 @@
 
         <div class="master-decision">
             <h2 style="border:none;">MASTER GO / NO-GO</h2>
-            <p class="status">NO-GO</p>
-        </div>
-
-        <div class="card">
-            <h2>COMMUNICATIONS (LiveATC)</h2>
-            <div class="com-stack">
-                <a id="atis-link" href="https://www.liveatc.net/search/?icao=KJFK" target="_blank" class="com-btn">
-                    LISTEN TO <span id="liveatc-btn-text">KJFK</span> ➔
-                </a>
-                <p style="font-size: 0.8rem; color: #94a3b8; text-align: center; margin: 0;">Opens LiveATC directory in a new tab.</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="card" style="margin-bottom: 20px;">
-        <h2>RAW METAR TEXT <span id="fetch-status" style="font-size: 0.7rem; float:right; color: #94a3b8;"></span></h2>
-        <div id="metar-box" class="metar-display">Waiting for secure connection...</div>
-    </div>
-
-    <div class="mid-row">
-        <div class="card">
-            <h2>LIVE TRAFFIC (ADS-B Exchange)</h2>
-            <iframe id="adsb-iframe" class="radar-frame" src="https://globe.adsbexchange.com/?lat=40.64&lon=-73.77&zoom=11"></iframe>
-        </div>
-
-        <div class="card">
-            <h2>AVIATION WEATHER (GFA MAP)</h2>
-            <iframe class="gfa-frame" src="https://aviationweather.gov/gfa/"></iframe>
-        </div>
-    </div>
-</div>
-
-<script>
-    // --- 1. SETTINGS & STATE LOGIC ---
-    let userSettings = JSON.parse(localStorage.getItem('pilotMinimums')) || { 
-        icao: 'KJFK', 
-        rwy: 4, 
-        maxWind: 20, 
-        minCeil: 1500, 
-        maxXwind: 10
-    };
-
-    // This variable holds the target airport's timezone (defaults to system local time)
-    let currentAirportTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    // --- 2. CLOCK LOGIC ---
-    function updateClocks() {
-        const now = new Date();
-        
-        // Local Time (Dynamically shifts to airport timezone when searched)
-        try {
-            const localTimeStr = now.toLocaleTimeString('en-US', { timeZone: currentAirportTZ, hour12: false });
-            document.getElementById('clock-local').innerText = localTimeStr;
-        } catch (e) {
-            // Fallback if timezone string is invalid
-            document.getElementById('clock-local').innerText = now.toLocaleTimeString('en-US', { hour12: false });
-        }
-        
-        // Zulu Time (Always UTC)
-        const zuluHours = String(now.getUTCHours()).padStart(2, '0');
-        const zuluMins = String(now.getUTCMinutes()).padStart(2, '0');
-        const zuluSecs = String(now.getUTCSeconds()).padStart(2, '0');
-        document.getElementById('clock-zulu').innerText = `${zuluHours}:${zuluMins}:${zuluSecs} Z`;
-    }
-    setInterval(updateClocks, 1000);
-    updateClocks(); 
-
-    // --- 3. UI FUNCTIONS ---
-    function handleEnter(e) { if (e.key === 'Enter') searchNewAirport(); }
-
-    function searchNewAirport() {
-        let newIcao = document.getElementById('global-icao').value.trim().toUpperCase();
-        if (newIcao.length >= 3) {
-            userSettings.icao = newIcao;
-            localStorage.setItem('pilotMinimums', JSON.stringify(userSettings));
-            updateUI();
-            checkWeather(); 
-        } else { alert("Enter a valid ICAO code."); }
-    }
-
-    function toggleEdit() {
-        document.getElementById('display-mode').classList.add('hidden');
-        document.querySelector('.edit-btn').classList.add('hidden');
-        document.getElementById('edit-mode').classList.remove('hidden');
-        document.getElementById('input-rwy').value = userSettings.rwy;
-        document.getElementById('input-wind').value = userSettings.maxWind;
-        document.getElementById('input-ceil').value = userSettings.minCeil;
-        document.getElementById('input-xwind').value = userSettings.maxXwind;
-    }
-
-    function saveSettings() {
-        userSettings.rwy = parseInt(document.getElementById('input-rwy').value) || 4;
-        userSettings.maxWind = parseInt(document.getElementById('input-wind').value) || 20;
-        userSettings.minCeil = parseInt(document.getElementById('input-ceil').value) || 1500;
-        userSettings.maxXwind = parseInt(document.getElementById('input-xwind').value) || 10;
-        localStorage.setItem('pilotMinimums', JSON.stringify(userSettings));
-        
-        document.getElementById('edit-mode').classList.add('hidden');
-        document.getElementById('display-mode').classList.remove('hidden');
-        document.querySelector('.edit-btn').classList.remove('hidden');
-        updateUI(); 
-        checkWeather();
-    }
-
-    function updateUI() {
-        document.getElementById('global-icao').value = userSettings.icao;
-        document.getElementById('display-icao').innerText = userSettings.icao;
-        document.getElementById('display-rwy').innerText = userSettings.rwy < 10 ? '0'+userSettings.rwy : userSettings.rwy;
-        document.getElementById('set-wind').innerText = userSettings.maxWind;
-        document.getElementById('set-ceil').innerText = userSettings.minCeil;
-        document.getElementById('set-xwind').innerText = userSettings.maxXwind;
-        
-        // Update LiveATC elements
-        document.getElementById('liveatc-btn-text').innerText = userSettings.icao;
-        document.getElementById('atis-link').href = `https://www.liveatc.net/search/?icao=${userSettings.icao}`;
-    }
-
-    function calculateCrosswind(windDir, windSpd, runwayHeading) {
-        if (!windDir || !windSpd || windDir === 0 || windSpd === 0) return 0; 
-        let angle = Math.abs(windDir - (runwayHeading * 10));
-        return Math.abs(Math.round(Math.sin(angle * (Math.PI / 180)) * windSpd));
-    }
-
-    function setBadge(elementId, isGo) {
-        const el = document.getElementById(elementId);
-        el.innerText = isGo ? "GO" : "NO-GO";
-        el.className = isGo ? "badge go" : "badge nogo";
-    }
-
-    // --- 4. TIMEZONE FETCH ENGINE ---
-    async function updateAirportTimezone(lat, lon) {
-        try {
-            // Open-Meteo has incredibly reliable, free CORS access for Timezone mapping
-            const tzUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`;
-            const res = await fetch(tzUrl);
-            const data = await res.json();
-            
-            if(data.timezone) {
-                currentAirportTZ = data.timezone;
-                document.getElementById('local-clock-title').innerText = `${userSettings.icao} LOCAL TIME`;
-                document.getElementById('local-clock-title').style.color = "var(--green-pass)";
-                updateClocks();
-            }
-        } catch (e) {
-            console.log("Timezone fetch failed. Leaving as system local.");
-        }
-    }
-
-    // --- 5. THE BULLETPROOF WEATHER FETCH ---
-    async function checkWeather() {
-        document.getElementById('metar-box').innerText = `Fetching secure data for ${userSettings.icao}...`;
-        document.getElementById('fetch-status').innerText = "Connecting...";
-        
-        let targetUrl = `https://aviationweather.gov/api/data/metar?ids=${userSettings.icao}&format=json`;
-        let weatherData = null;
-        
-        try {
-            // STEP 1: Try direct connection first
-            const response = await fetch(targetUrl);
-            if (!response.ok) throw new Error("Network response was not ok");
-            weatherData = await response.json();
-            document.getElementById('fetch-status').innerText = "(Direct Connection)";
-            document.getElementById('fetch-status').style.color = "var(--green-pass)";
-            
-        } catch (e) {
-            // STEP
