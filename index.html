@@ -16,95 +16,49 @@
             --border-color: #334155;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; box-sizing: border-box; }
 
-        /* --- NEW: Global Search Bar Styling --- */
-        .global-search-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .global-search-container input {
-            background-color: #0f172a;
-            border: 2px solid var(--accent-blue);
-            color: white;
-            padding: 12px 25px;
-            font-size: 1.5rem;
-            border-radius: 30px;
-            text-transform: uppercase;
-            width: 250px;
-            text-align: center;
-            outline: none;
-            letter-spacing: 2px;
-            font-weight: bold;
-        }
-        .global-search-container button {
-            background-color: var(--accent-blue);
-            color: #000;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.1rem;
-            font-weight: 900;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-        }
-        .global-search-container button:hover {
-            background-color: #7dd3fc;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(56, 189, 248, 0.4);
-        }
+        /* Global Search Bar */
+        .global-search-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        .global-search-container input { background-color: #0f172a; border: 2px solid var(--accent-blue); color: white; padding: 12px 25px; font-size: 1.5rem; border-radius: 30px; text-transform: uppercase; width: 250px; text-align: center; outline: none; font-weight: bold; }
+        .global-search-container button { background-color: var(--accent-blue); color: #000; border: none; padding: 15px 30px; font-size: 1.1rem; font-weight: 900; border-radius: 30px; cursor: pointer; text-transform: uppercase; }
+        .global-search-container button:hover { background-color: #7dd3fc; }
 
-        h2 {
-            font-size: 0.9rem;
-            color: var(--accent-blue);
-            margin-top: 0;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        h2 { font-size: 0.9rem; color: var(--accent-blue); margin-top: 0; margin-bottom: 15px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;}
 
         .dashboard-container { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; }
         .top-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .mid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         
-        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); }
-        .smart-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; position: relative; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); }
+        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         
-        .edit-btn { position: absolute; top: 15px; right: 15px; background: var(--accent-blue); color: #000; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+        /* Personal Minimums */
+        .edit-btn { position: absolute; top: 10px; right: 15px; background: var(--accent-blue); color: #000; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
         .edit-btn:hover { background: #7dd3fc; }
         .hidden { display: none !important; }
-        
         .edit-form label { display: block; margin-top: 10px; font-size: 0.85rem; color: #94a3b8; }
         .edit-form input { width: 100%; padding: 8px; margin-top: 5px; background: #0f172a; border: 1px solid var(--border-color); color: white; border-radius: 4px; box-sizing: border-box;}
         .save-btn { width: 100%; background: var(--green-pass); color: white; border: none; padding: 10px; margin-top: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .save-btn:hover { background: #16a34a; }
-
+        
         .min-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .min-row:last-child { border-bottom: none; }
         .min-data span { display: block; font-size: 0.8rem; color: #94a3b8; }
-        
         .badge { padding: 5px 15px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; }
         .badge.go { background-color: var(--green-pass); color: white; }
         .badge.nogo { background-color: var(--red-fail); color: white; }
 
-        .master-decision { display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #7f1d1d, #ef4444); border: 2px solid #b91c1c; border-radius: 8px; color: white; text-align: center; transition: all 0.3s ease; }
+        /* Master GO/NO-GO */
+        .master-decision { display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #7f1d1d, #ef4444); border: 2px solid #b91c1c; border-radius: 8px; color: white; text-align: center; }
         .master-decision h2 { color: white; margin-bottom: 5px; font-size: 1rem; border: none; }
         .master-decision .status { font-size: 3.5rem; font-weight: 900; line-height: 1; margin: 0; }
 
+        /* COM Stack (LiveATC) */
+        .com-stack { display: flex; flex-direction: column; gap: 10px; }
+        .com-btn { background-color: #0f172a; border: 1px solid #475569; color: #e2e8f0; padding: 12px; border-radius: 6px; text-align: left; font-family: monospace; font-size: 1.1rem; cursor: pointer; display: flex; justify-content: space-between; transition: background 0.2s; text-decoration: none;}
+        .com-btn:hover { background-color: #1e293b; border-color: var(--accent-blue); color: white;}
+        .com-label { color: #94a3b8; font-size: 0.8rem; display: block; margin-bottom: 2px;}
+
+        /* Risk Matrix */
         .risk-grid { display: grid; grid-template-columns: auto repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; background-color: var(--border-color); border: 1px solid var(--border-color); }
         .risk-cell { background-color: var(--card-bg); height: 30px; display: flex; justify-content: center; align-items: center; font-size: 0.7rem; color: #000; }
         .risk-label { background-color: transparent; color: var(--text-main); transform: rotate(-90deg); grid-row: span 3; height: 100px; width: 20px;}
@@ -112,173 +66,147 @@
         .bg-yellow { background-color: var(--yellow-warn); }
         .bg-red { background-color: var(--red-fail); }
 
-        .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .weather-section { display: flex; flex-direction: column; gap: 15px; }
-        
-        .metar-display { font-family: 'Courier New', Courier, monospace; color: #4ade80; background-color: #0f172a; padding: 10px; border-radius: 4px; font-size: 0.95rem; white-space: pre-wrap; line-height: 1.4; }
-        
-        .graphical-obs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .graphical-obs img { width: 100%; height: 200px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color); }
+        /* Weather Text */
+        .metar-display { font-family: 'Courier New', Courier, monospace; color: #4ade80; background-color: #0f172a; padding: 10px; border-radius: 4px; font-size: 0.95rem; white-space: pre-wrap; line-height: 1.4; height: 130px; overflow-y: auto;}
 
-        .radar-atis-container { display: flex; flex-direction: column; }
-        .atis-header { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
-        .atis-play-btn { background-color: var(--accent-blue); color: #000; border: none; padding: 5px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; text-decoration: none;}
-        .atis-play-btn:hover { background-color: #7dd3fc; }
-        .radar-frame { width: 100%; height: 400px; border: none; border-radius: 4px; margin-top: 10px; }
+        /* Graphical Weather Tabs */
+        .tabs { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap;}
+        .tab-btn { background: #334155; border: none; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold;}
+        .tab-btn.active { background: var(--accent-blue); color: black; }
+        .tab-btn:hover:not(.active) { background: #475569; }
+        .weather-frame { width: 100%; height: 450px; border: none; border-radius: 4px; }
+
+        .radar-frame { width: 100%; height: 450px; border: none; border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <div class="global-search-container">
-    <input type="text" id="global-icao" placeholder="ICAO (e.g. KJFK)" maxlength="4" onkeypress="handleEnter(event)">
-    <button onclick="searchNewAirport()">Search Airport</button>
+    <input type="text" id="global-icao" placeholder="ICAO" maxlength="4" onkeypress="handleEnter(event)">
+    <button onclick="searchNewAirport()">Search Dashboard</button>
 </div>
 
 <div class="dashboard-container">
     
     <div class="top-row">
-        <div class="smart-card" id="mins-card">
+        <div class="card" style="position: relative;">
             <h2>Personal Minimums <span id="display-icao" style="color:white; margin-left:10px;">KJFK</span></h2>
             <button class="edit-btn" onclick="toggleEdit()">EDIT MINS</button>
         
             <div id="display-mode">
                 <div class="min-row">
-                    <div class="min-data">Wind: <span id="live-wind">--</span> <span>(MAX: <span id="set-wind">20</span> kts)</span></div>
+                    <div class="min-data">Wind: <span id="live-wind">--</span> <span style="font-size:0.65rem;">(MAX: <span id="set-wind">20</span> kt)</span></div>
                     <div id="badge-wind" class="badge">--</div>
                 </div>
                 <div class="min-row">
-                    <div class="min-data">Ceiling: <span id="live-ceil">--</span> <span>(MIN: <span id="set-ceil">1500</span> ft)</span></div>
+                    <div class="min-data">Ceiling: <span id="live-ceil">--</span> <span style="font-size:0.65rem;">(MIN: <span id="set-ceil">1500</span> ft)</span></div>
                     <div id="badge-ceil" class="badge">--</div>
                 </div>
                 <div class="min-row">
-                    <div class="min-data">Crosswind: <span id="live-xwind">--</span> <span>(MAX: <span id="set-xwind">10</span> kts)</span><br><span style="font-size:0.7rem;">Rwy: <span id="display-rwy">04</span></span></div>
+                    <div class="min-data">Crosswind: <span id="live-xwind">--</span> <span style="font-size:0.65rem;">(MAX: <span id="set-xwind">10</span> kt | Rwy <span id="display-rwy">04</span>)</span></div>
                     <div id="badge-xwind" class="badge">--</div>
                 </div>
                 <div style="margin-top: 10px; font-size: 0.75rem; color: #aaa;" id="metar-time"></div>
-                <div style="margin-top: 5px; font-size: 0.75rem; color: var(--red-fail);" id="error-message"></div>
             </div>
         
             <div id="edit-mode" class="edit-form hidden">
-                <label>Planned Runway (e.g., 04, 22):
-                    <input type="number" id="input-rwy" min="1" max="36">
-                </label>
-                <label>Max Wind / Gust (kts):
-                    <input type="number" id="input-wind">
-                </label>
-                <label>Minimum Ceiling (ft):
-                    <input type="number" id="input-ceil" step="100">
-                </label>
-                <label>Max Crosswind (kts):
-                    <input type="number" id="input-xwind">
-                </label>
+                <label>Planned Runway (e.g., 04, 22): <input type="number" id="input-rwy" min="1" max="36"></label>
+                <label>Max Wind (kts): <input type="number" id="input-wind"></label>
+                <label>Min Ceiling (ft): <input type="number" id="input-ceil" step="100"></label>
+                <label>Max Crosswind (kts): <input type="number" id="input-xwind"></label>
                 <button class="save-btn" onclick="saveSettings()">SAVE MINIMUMS</button>
             </div>
         </div>
 
         <div class="master-decision">
-            <h2>MASTER GO / NO-GO</h2>
+            <h2 style="border:none;">MASTER GO / NO-GO</h2>
             <p class="status">NO-GO</p>
         </div>
 
         <div class="card">
-            <h2>Risk Management</h2>
+            <h2>COMMUNICATIONS (LiveATC)</h2>
+            <div class="com-stack">
+                <a href="#" onclick="openLiveATC()" class="com-btn">
+                    <div>
+                        <span class="com-label">COM 1 (Web Player)</span>
+                        LISTEN TO <span class="com-icao-text">KJFK</span>
+                    </div>
+                    <div>▶</div>
+                </a>
+                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 5px;">
+                    Clicking play will open a small popup to the LiveATC directory for this airport. Select Tower, Ground, or Approach to begin streaming.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mid-row">
+        <div class="card">
+            <h2>RAW TEXT (METAR/TAF)</h2>
+            <div id="metar-box" class="metar-display">Loading secure data...</div>
+        </div>
+
+        <div class="card">
+            <h2>Risk Matrix</h2>
             <div class="risk-grid">
                 <div class="risk-cell risk-label">Alert</div>
-                <div class="risk-cell bg-green"></div>
-                <div class="risk-cell bg-yellow">⚠</div>
-                <div class="risk-cell bg-red">⚠</div>
-                <div class="risk-cell bg-red">⚠</div>
-                <div class="risk-cell bg-green"></div>
-                <div class="risk-cell bg-green"></div>
-                <div class="risk-cell bg-yellow">⚠</div>
-                <div class="risk-cell bg-yellow"></div>
-                <div class="risk-cell bg-green"></div>
-                <div class="risk-cell bg-green"></div>
-                <div class="risk-cell bg-green"></div>
-                <div class="risk-cell bg-yellow"></div>
+                <div class="risk-cell bg-green"></div><div class="risk-cell bg-yellow">⚠</div><div class="risk-cell bg-red">⚠</div><div class="risk-cell bg-red">⚠</div>
+                <div class="risk-cell bg-green"></div><div class="risk-cell bg-green"></div><div class="risk-cell bg-yellow">⚠</div><div class="risk-cell bg-yellow"></div>
+                <div class="risk-cell bg-green"></div><div class="risk-cell bg-green"></div><div class="risk-cell bg-green"></div><div class="risk-cell bg-yellow"></div>
             </div>
         </div>
     </div>
 
-    <div class="bottom-row">
-        <div class="weather-section">
-            <div class="card">
-                <h2>Live Weather (METAR/TAF) - <span id="airport-code">KJFK</span></h2>
-                <div id="metar-box" class="metar-display">Waiting for search...</div>
-            </div>
-
-            <div class="card">
-                <h2>Graphical Observations</h2>
-                <div class="graphical-obs">
-                    <div>
-                        <span style="font-size: 0.8rem; color: #94a3b8;">Visible (NEXRAD)</span>
-                        <img src="https://radar.weather.gov/ridge/standard/CONUS_loop.gif" alt="Live Radar Loop">
-                    </div>
-                    <div>
-                        <span style="font-size: 0.8rem; color: #94a3b8;">Interactive Satellite</span>
-                        <img src="https://cdn.star.nesdis.noaa.gov/GOES16/ABI/CONUS/GEOCOLOR/625x375.jpg" alt="Live Satellite">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card radar-atis-container">
-            <h2>
-                LIVE RADAR (ADS-B Exchange)
-                <div class="atis-header">
-                    <a href="https://www.liveatc.net/search/?icao=KJFK" target="_blank" class="atis-play-btn" id="atis-link">
-                        ▶ LiveATC
-                    </a>
-                </div>
-            </h2>
+    <div class="mid-row">
+        
+        <div class="card">
+            <h2>LIVE TRAFFIC (ADS-B Exchange)</h2>
             <iframe id="adsb-iframe" class="radar-frame" src="https://globe.adsbexchange.com/?lat=40.64&lon=-73.77&zoom=11"></iframe>
         </div>
-    </div>
 
+        <div class="card">
+            <h2>GRAPHICAL WEATHER STATION</h2>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="setWeatherTab('radar', this)">Radar</button>
+                <button class="tab-btn" onclick="setWeatherTab('clouds', this)">Clouds</button>
+                <button class="tab-btn" onclick="setWeatherTab('wind', this)">Winds</button>
+                <button class="tab-btn" onclick="setWeatherTab('temp', this)">Temps</button>
+                <button class="tab-btn" onclick="setWeatherTab('turbu', this)">Turbulence</button>
+                <button class="tab-btn" onclick="setWeatherTab('icing', this)">Icing</button>
+            </div>
+            <iframe id="weather-iframe" class="weather-frame" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=in&metricTemp=%C2%B0F&metricWind=kt&zoom=8&overlay=radar&lat=40.64&lon=-73.77"></iframe>
+        </div>
+
+    </div>
 </div>
 
 <script>
-    let userSettings = JSON.parse(localStorage.getItem('pilotMinimums')) || {
-        icao: 'KJFK',
-        rwy: 4,
-        maxWind: 20,
-        minCeil: 1500,
-        maxXwind: 10
-    };
+    let userSettings = JSON.parse(localStorage.getItem('pilotMinimums')) || { icao: 'KJFK', rwy: 4, maxWind: 20, minCeil: 1500, maxXwind: 10 };
+    let currentLat = 40.64;
+    let currentLon = -73.77;
+    let currentOverlay = 'radar';
 
-    // --- NEW: Global Search Functions ---
-    function handleEnter(e) {
-        if (e.key === 'Enter') searchNewAirport();
-    }
+    // CORS Proxy configured for massive reliability
+    const CORS_API_URL = 'https://api.allorigins.win/get?url=';
+
+    function handleEnter(e) { if (e.key === 'Enter') searchNewAirport(); }
 
     function searchNewAirport() {
-        const inputField = document.getElementById('global-icao');
-        let newIcao = inputField.value.trim().toUpperCase();
-        
+        let newIcao = document.getElementById('global-icao').value.trim().toUpperCase();
         if (newIcao.length >= 3) {
             userSettings.icao = newIcao;
             localStorage.setItem('pilotMinimums', JSON.stringify(userSettings));
-            
-            // Update UI strings instantly
-            document.getElementById('display-icao').innerText = userSettings.icao;
-            document.getElementById('airport-code').innerText = userSettings.icao;
-            document.getElementById('atis-link').href = `https://www.liveatc.net/search/?icao=${userSettings.icao}`;
-            
-            // Trigger API fetches
+            updateUI();
             checkMinimums();
             getRawWeather();
-        } else {
-            alert("Please enter a valid 3 or 4 letter airport code.");
-        }
+        } else { alert("Enter a valid ICAO."); }
     }
 
-    // --- Existing UI Functions ---
     function toggleEdit() {
         document.getElementById('display-mode').classList.add('hidden');
         document.querySelector('.edit-btn').classList.add('hidden');
         document.getElementById('edit-mode').classList.remove('hidden');
-        
-        document.getElementById('input-rwy').value = userSettings.rwy < 10 ? '0'+userSettings.rwy : userSettings.rwy;
+        document.getElementById('input-rwy').value = userSettings.rwy;
         document.getElementById('input-wind').value = userSettings.maxWind;
         document.getElementById('input-ceil').value = userSettings.minCeil;
         document.getElementById('input-xwind').value = userSettings.maxXwind;
@@ -289,34 +217,51 @@
         userSettings.maxWind = parseInt(document.getElementById('input-wind').value) || 20;
         userSettings.minCeil = parseInt(document.getElementById('input-ceil').value) || 1500;
         userSettings.maxXwind = parseInt(document.getElementById('input-xwind').value) || 10;
-        
         localStorage.setItem('pilotMinimums', JSON.stringify(userSettings));
         
         document.getElementById('edit-mode').classList.add('hidden');
         document.getElementById('display-mode').classList.remove('hidden');
         document.querySelector('.edit-btn').classList.remove('hidden');
-        
-        updateUI();
-        checkMinimums();
+        updateUI(); checkMinimums();
     }
 
     function updateUI() {
         document.getElementById('global-icao').value = userSettings.icao;
         document.getElementById('display-icao').innerText = userSettings.icao;
-        document.getElementById('airport-code').innerText = userSettings.icao;
         document.getElementById('display-rwy').innerText = userSettings.rwy < 10 ? '0'+userSettings.rwy : userSettings.rwy;
         document.getElementById('set-wind').innerText = userSettings.maxWind;
         document.getElementById('set-ceil').innerText = userSettings.minCeil;
         document.getElementById('set-xwind').innerText = userSettings.maxXwind;
-        document.getElementById('atis-link').href = `https://www.liveatc.net/search/?icao=${userSettings.icao}`;
+        document.querySelector('.com-icao-text').innerText = userSettings.icao;
+    }
+
+    // COM Stack logic
+    function openLiveATC() {
+        const url = `https://www.liveatc.net/search/?icao=${userSettings.icao}`;
+        window.open(url, "LiveATC", "width=500,height=600,scrollbars=yes");
+    }
+
+    // Graphical Weather Tab Logic
+    function setWeatherTab(overlay, btnElement) {
+        currentOverlay = overlay;
+        
+        // Update active button styling
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+
+        // Update iframe source
+        updateWeatherIframe();
+    }
+
+    function updateWeatherIframe() {
+        const url = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=in&metricTemp=%C2%B0F&metricWind=kt&zoom=8&overlay=${currentOverlay}&lat=${currentLat}&lon=${currentLon}`;
+        document.getElementById('weather-iframe').src = url;
     }
 
     function calculateCrosswind(windDir, windSpd, runwayHeading) {
         if (!windDir || !windSpd || windDir === 0 || windSpd === 0) return 0; 
-        let rwyDeg = runwayHeading * 10; 
-        let angle = Math.abs(windDir - rwyDeg);
-        let radians = angle * (Math.PI / 180);
-        return Math.abs(Math.round(Math.sin(radians) * windSpd));
+        let angle = Math.abs(windDir - (runwayHeading * 10));
+        return Math.abs(Math.round(Math.sin(angle * (Math.PI / 180)) * windSpd));
     }
 
     function setBadge(elementId, isGo) {
@@ -325,117 +270,99 @@
         el.className = isGo ? "badge go" : "badge nogo";
     }
 
-    // --- Weather Fetching ---
+    // NEW CORS-BYPASS FETCH FOR RAW WEATHER
     async function getRawWeather() {
         try {
-            document.getElementById('metar-box').innerText = `Loading data for ${userSettings.icao}...`;
-            const url = `https://aviationweather.gov/api/data/metar?ids=${userSettings.icao}&format=raw&hours=2`;
-            const response = await fetch(url);
+            document.getElementById('metar-box').innerText = `Loading secure data for ${userSettings.icao}...`;
+            const targetUrl = `https://aviationweather.gov/api/data/metar?ids=${userSettings.icao}&format=raw&hours=2`;
+            const response = await fetch(CORS_API_URL + encodeURIComponent(targetUrl));
+            const data = await response.json();
             
-            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
-            
-            const data = await response.text();
-            document.getElementById('metar-box').innerText = data || `No METAR reports found for ${userSettings.icao} in the last 2 hours.`;
-            
+            if (data.contents) {
+                document.getElementById('metar-box').innerText = data.contents;
+            } else {
+                document.getElementById('metar-box').innerText = "No reports found for this airport.";
+            }
         } catch (e) {
-            document.getElementById('metar-box').innerText = `Data Error: Could not connect to AviationWeather.gov.\n\nNote: If you have an AdBlocker, privacy shield (like Brave), or tracking blocker installed, it may be preventing this webpage from downloading the live weather data in the background. Try disabling it for this site.`;
+            document.getElementById('metar-box').innerText = "Error: Could not retrieve data through proxy.";
         }
     }
 
+    // NEW CORS-BYPASS FETCH FOR MINIMUMS LOGIC
     async function checkMinimums() {
-        document.getElementById('error-message').innerText = ""; 
         try {
-            const url = `https://aviationweather.gov/api/data/metar?ids=${userSettings.icao}&format=json`;
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (!data || data.length === 0) throw new Error("No data found for this airport code.");
+            const targetUrl = `https://aviationweather.gov/api/data/metar?ids=${userSettings.icao}&format=json`;
+            const response = await fetch(CORS_API_URL + encodeURIComponent(targetUrl));
+            const proxyData = await response.json();
+            
+            const data = JSON.parse(proxyData.contents);
+            if (!data || data.length === 0) throw new Error("No data found.");
             
             const metar = data[0]; 
 
-            // --- AUTO-UPDATE RADAR IF LAT/LON EXISTS ---
+            // Update Maps Location if coordinates are provided
             if (metar.lat && metar.lon) {
-                document.getElementById('adsb-iframe').src = `https://globe.adsbexchange.com/?lat=${metar.lat}&lon=${metar.lon}&zoom=11`;
+                currentLat = metar.lat;
+                currentLon = metar.lon;
+                document.getElementById('adsb-iframe').src = `https://globe.adsbexchange.com/?lat=${currentLat}&lon=${currentLon}&zoom=11`;
+                updateWeatherIframe();
             }
 
-            // WIND
+            // Wind
             const windSpd = metar.wspd || 0;
             const windGust = metar.wgst || 0;
             const maxReportedWind = Math.max(windSpd, windGust);
-            
-            let windText = `${windSpd} kts`;
-            if (windGust > 0) windText += ` gust ${windGust}`;
-            document.getElementById('live-wind').innerText = windText;
-            
+            document.getElementById('live-wind').innerText = `${windSpd} kt` + (windGust > 0 ? ` G${windGust}` : '');
             let isWindGo = maxReportedWind <= userSettings.maxWind;
             setBadge('badge-wind', isWindGo);
 
-            // CROSSWIND
+            // Crosswind
             const windDir = metar.wdir || null;
             let crosswind = calculateCrosswind(windDir, maxReportedWind, userSettings.rwy); 
-            
-            document.getElementById('live-xwind').innerText = windDir ? `${crosswind} kts` : 'Calm/VRB';
+            document.getElementById('live-xwind').innerText = windDir ? `${crosswind} kt` : 'VRB';
             let isXwindGo = crosswind <= userSettings.maxXwind;
             setBadge('badge-xwind', isXwindGo);
 
-            // CEILING
-            let ceiling = "Unlimited";
+            // Ceiling
             let ceilingValue = 99999; 
-            
             if (metar.clouds) {
                 for (let layer of metar.clouds) {
-                    if (layer.cover === 'BKN' || layer.cover === 'OVC' || layer.cover === 'VV') {
+                    if (['BKN', 'OVC', 'VV'].includes(layer.cover)) {
                         ceilingValue = layer.base || 0;
-                        ceiling = `${ceilingValue} ft`;
                         break; 
                     }
                 }
             }
-            
-            document.getElementById('live-ceil').innerText = ceiling;
+            document.getElementById('live-ceil').innerText = ceilingValue === 99999 ? "Unlimited" : `${ceilingValue} ft`;
             let isCeilGo = ceilingValue >= userSettings.minCeil;
             setBadge('badge-ceil', isCeilGo);
 
-            // MASTER DECISION
+            // Master Status Update
             const masterGo = isWindGo && isXwindGo && isCeilGo;
-            const masterStatusText = document.querySelector('.master-decision .status');
-            const masterDecisionBox = document.querySelector('.master-decision');
+            const mText = document.querySelector('.master-decision .status');
+            const mBox = document.querySelector('.master-decision');
 
             if (masterGo) {
-                masterStatusText.innerText = "GO";
-                masterDecisionBox.style.background = "linear-gradient(135deg, #14532d, #22c55e)";
-                masterDecisionBox.style.borderColor = "#16a34a";
+                mText.innerText = "GO";
+                mBox.style.background = "linear-gradient(135deg, #14532d, #22c55e)";
+                mBox.style.borderColor = "#16a34a";
             } else {
-                masterStatusText.innerText = "NO-GO";
-                masterDecisionBox.style.background = "linear-gradient(135deg, #7f1d1d, #ef4444)";
-                masterDecisionBox.style.borderColor = "#b91c1c";
+                mText.innerText = "NO-GO";
+                mBox.style.background = "linear-gradient(135deg, #7f1d1d, #ef4444)";
+                mBox.style.borderColor = "#b91c1c";
             }
-
             document.getElementById('metar-time').innerText = `Report Time: ${metar.obsTime || 'Unknown'}`;
 
         } catch (error) {
             console.error(error);
-            document.getElementById('live-wind').innerText = "--";
-            document.getElementById('live-ceil').innerText = "--";
-            document.getElementById('live-xwind').innerText = "--";
-            document.getElementById('error-message').innerText = `Error: ${error.message}`;
-            
+            document.getElementById('live-wind').innerText = "--"; document.getElementById('live-ceil').innerText = "--"; document.getElementById('live-xwind').innerText = "--";
             document.querySelector('.master-decision .status').innerText = "NO-GO";
             document.querySelector('.master-decision').style.background = "linear-gradient(135deg, #7f1d1d, #ef4444)";
         }
     }
 
-    // Run on startup
-    updateUI();
-    checkMinimums();
-    getRawWeather();
-    
-    // Refresh every 5 minutes
-    setInterval(() => {
-        checkMinimums();
-        getRawWeather();
-    }, 300000); 
+    updateUI(); checkMinimums(); getRawWeather();
+    setInterval(() => { checkMinimums(); getRawWeather(); }, 300000); 
 </script>
-
 </body>
 </html>
