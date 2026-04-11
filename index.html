@@ -69,7 +69,7 @@
 
 <div class="header-container">
     <div class="clock-box">
-        <span class="clock-label" id="local-clock-title">LOCAL TIME</span>
+        <span class="clock-label" id="local-clock-title">SYSTEM LOCAL TIME</span>
         <span class="clock-time" id="clock-local">00:00:00</span>
     </div>
 
@@ -85,10 +85,9 @@
 </div>
 
 <div class="dashboard-container">
-    
     <div class="top-row">
         <div class="card">
-            <h2>Personal Minimums <span id="display-icao" style="color:white; margin-left:10px;">KJFK</span></h2>
+            <h2>Personal Minimums <span id="display-icao" style="color:white; margin-left:10px;">KPVU</span></h2>
             <button class="edit-btn" onclick="toggleEdit()">EDIT MINS</button>
         
             <div id="display-mode">
@@ -112,7 +111,7 @@
                 <label>Max Wind (kts): <input type="number" id="input-wind"></label>
                 <label>Min Ceiling (ft): <input type="number" id="input-ceil" step="100"></label>
                 <label>Max Crosswind (kts): <input type="number" id="input-xwind"></label>
-                <button class="save-btn" onclick="saveSettings()">SAVE MINIMUMS</button>
+                <button class="save-btn" onclick="saveSettings()">APPLY TEMPORARY MINIMUMS</button>
             </div>
         </div>
 
@@ -124,8 +123,8 @@
         <div class="card">
             <h2>COMMUNICATIONS (LiveATC)</h2>
             <div class="com-stack">
-                <a id="atis-link" href="https://www.liveatc.net/search/?icao=KJFK" target="_blank" class="com-btn">
-                    LISTEN TO <span id="liveatc-btn-text">KJFK</span> ➔
+                <a id="atis-link" href="https://www.liveatc.net/search/?icao=KPVU" target="_blank" class="com-btn">
+                    LISTEN TO <span id="liveatc-btn-text">KPVU</span> ➔
                 </a>
                 <p style="font-size: 0.8rem; color: #94a3b8; text-align: center; margin: 0;">Opens LiveATC directory in a new tab.</p>
             </div>
@@ -133,14 +132,14 @@
     </div>
 
     <div class="card" style="margin-bottom: 20px;">
-        <h2>RAW METAR TEXT</h2>
-        <div id="metar-box" class="metar-display">Loading aviation weather data...</div>
+        <h2>RAW METAR TEXT <span id="fetch-status" style="font-size: 0.7rem; float:right; color: #94a3b8;"></span></h2>
+        <div id="metar-box" class="metar-display">Initializing Dashboard...</div>
     </div>
 
     <div class="mid-row">
         <div class="card">
             <h2>LIVE TRAFFIC (ADS-B Exchange)</h2>
-            <iframe id="adsb-iframe" class="radar-frame" src="https://globe.adsbexchange.com/?lat=40.64&lon=-73.77&zoom=11"></iframe>
+            <iframe id="adsb-iframe" class="radar-frame" src="https://globe.adsbexchange.com/?lat=40.22&lon=-111.72&zoom=11"></iframe>
         </div>
 
         <div class="card">
@@ -151,32 +150,228 @@
 </div>
 
 <script>
-    // --- 1. SETTINGS & STATE (BULLETPROOF INIT) ---
-    let userSettings;
-    try {
-        // Renamed key to 'pilotSettingsV2' to force a clean slate and bypass corruption
-        userSettings = JSON.parse(localStorage.getItem('pilotSettingsV2'));
-        if (!userSettings || typeof userSettings.icao !== 'string') {
-            throw new Error("Corrupted or empty memory");
-        }
-    } catch (e) {
-        // Safe Fallback
-        userSettings = { icao: 'KJFK', rwy: 4, maxWind: 20, minCeil: 1500, maxXwind: 10 };
-    }
-
+    // --- 1. CLEAN SLATE STATE (NO LOCAL STORAGE) ---
+    // Hardcoded to KPVU (Provo) so we know it works out of the box.
+    let currentIcao = 'KPVU';
+    let currentRwy = 4;
+    let maxWind = 20;
+    let minCeil = 1500;
+    let maxXwind = 10;
     let currentAirportTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     // --- 2. INDESTRUCTIBLE CLOCK ENGINE ---
     function updateClocks() {
-        try {
-            const now = new Date();
-            const localEl = document.getElementById('clock-local');
-            const zuluEl = document.getElementById('clock-zulu');
+        const now = new Date();
+        const localEl = document.getElementById('clock-local');
+        const zuluEl = document.getElementById('clock-zulu');
 
-            if (localEl) {
+        if (localEl) {
+            try {
                 localEl.innerText = now.toLocaleTimeString('en-US', { timeZone: currentAirportTZ, hour12: false });
+            } catch (e) {
+                localEl.innerText = now.toLocaleTimeString('en-US', { hour12: false });
+                currentAirportTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            }
+        }
+        
+        if (zuluEl) {
+            const zHours = String(now.getUTCHours()).padStart(2, '0');
+            const zMins = String(now.getUTCMinutes()).padStart(2, '0');
+            const zSecs = String(now.getUTCSeconds()).padStart(2, '0');
+            zuluEl.innerText = `${zHours}:${zMins}:${zSecs} Z`;
+        }
+    }
+    setInterval(updateClocks, 1000);
+
+    // --- 3. UI CONTROLS ---
+    function handleEnter(e) { if (e.key === 'Enter') searchNewAirport(); }
+
+    function searchNewAirport() {
+        let newIcao = document.getElementById('global-icao').value.trim().toUpperCase();
+        if (newIcao.length >= 3) {
+            currentIcao = newIcao;
+            updateUI();
+            checkWeather(); 
+        } else { alert("Enter a valid ICAO code."); }
+    }
+
+    function toggleEdit() {
+        document.getElementById('display-mode').classList.add('hidden');
+        document.querySelector('.edit-btn').classList.add('hidden');
+        document.getElementById('edit-mode').classList.remove('hidden');
+        document.getElementById('input-rwy').value = currentRwy;
+        document.getElementById('input-wind').value = maxWind;
+        document.getElementById('input-ceil').value = minCeil;
+        document.getElementById('input-xwind').value = maxXwind;
+    }
+
+    function saveSettings() {
+        currentRwy = parseInt(document.getElementById('input-rwy').value) || 4;
+        maxWind = parseInt(document.getElementById('input-wind').value) || 20;
+        minCeil = parseInt(document.getElementById('input-ceil').value) || 1500;
+        maxXwind = parseInt(document.getElementById('input-xwind').value) || 10;
+        
+        document.getElementById('edit-mode').classList.add('hidden');
+        document.getElementById('display-mode').classList.remove('hidden');
+        document.querySelector('.edit-btn').classList.remove('hidden');
+        updateUI(); 
+        checkWeather();
+    }
+
+    function updateUI() {
+        document.getElementById('global-icao').value = currentIcao;
+        document.getElementById('display-icao').innerText = currentIcao;
+        document.getElementById('display-rwy').innerText = currentRwy < 10 ? '0'+currentRwy : currentRwy;
+        document.getElementById('set-wind').innerText = maxWind;
+        document.getElementById('set-ceil').innerText = minCeil;
+        document.getElementById('set-xwind').innerText = maxXwind;
+        document.getElementById('liveatc-btn-text').innerText = currentIcao;
+        document.getElementById('atis-link').href = `https://www.liveatc.net/search/?icao=${currentIcao}`;
+    }
+
+    function calculateCrosswind(windDir, windSpd, runwayHeading) {
+        if (!windDir || !windSpd || windDir === 0 || windSpd === 0) return 0; 
+        let angle = Math.abs(windDir - (runwayHeading * 10));
+        return Math.abs(Math.round(Math.sin(angle * (Math.PI / 180)) * windSpd));
+    }
+
+    function setBadge(elementId, isGo) {
+        const el = document.getElementById(elementId);
+        if(el) {
+            el.innerText = isGo ? "GO" : "NO-GO";
+            el.className = isGo ? "badge go" : "badge nogo";
+        }
+    }
+
+    // --- 4. TIMEZONE ENGINE ---
+    async function updateAirportTimezone(lat, lon) {
+        try {
+            const tzUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`;
+            const res = await fetch(tzUrl);
+            if (res.ok) {
+                const data = await res.json();
+                if(data.timezone) {
+                    currentAirportTZ = data.timezone;
+                    document.getElementById('local-clock-title').innerText = `${currentIcao} LOCAL TIME`;
+                    document.getElementById('local-clock-title').style.color = "var(--green-pass)";
+                }
+            }
+        } catch (e) { console.log("Timezone fetch failed. Leaving as local."); }
+    }
+
+    // --- 5. THE FAIL-SAFE FETCH ENGINE (Uses Verified CodeTabs Proxy) ---
+    async function safeFetchWeather(icao) {
+        const directUrl = `https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`;
+        
+        try {
+            // Attempt 1: Direct JSON 
+            const res = await fetch(directUrl);
+            if (res.ok) return await res.json();
+        } catch (e) {
+            console.log("Direct connection blocked. Failing over to CodeTabs Proxy.");
+        }
+
+        try {
+            // Attempt 2: CodeTabs Proxy (Verified working by user)
+            document.getElementById('fetch-status').innerText = "(Routing via CodeTabs Proxy)";
+            const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(directUrl)}`;
+            const res = await fetch(proxyUrl);
+            if (res.ok) {
+                const textData = await res.text();
+                return JSON.parse(textData); // Manually parse text to prevent crashes
+            }
+        } catch (e) {
+            console.log("Proxy connection failed.");
+        }
+
+        throw new Error("Browser blocked both direct and proxy connections.");
+    }
+
+    async function checkWeather() {
+        const metarBox = document.getElementById('metar-box');
+        
+        try {
+            metarBox.innerText = `Fetching data for ${currentIcao}...`;
+            document.getElementById('fetch-status').innerText = "";
+            
+            const data = await safeFetchWeather(currentIcao);
+            
+            if (!data || data.length === 0) {
+                throw new Error(`No METAR data reported for ${currentIcao}. Check the ICAO code.`);
             }
             
-            if (zuluEl) {
-                const zHours = String(now.getUTCHours()).padStart(2, '0');
-                const zM
+            const metar = data[0]; 
+
+            // Update UI safely
+            metarBox.innerText = metar.rawOb || "Data retrieved, but raw text is missing.";
+
+            if (metar.lat && metar.lon) {
+                document.getElementById('adsb-iframe').src = `https://globe.adsbexchange.com/?lat=${metar.lat}&lon=${metar.lon}&zoom=11`;
+                updateAirportTimezone(metar.lat, metar.lon);
+            }
+
+            // Minimums Logic
+            const windSpd = metar.wspd || 0;
+            const windGust = metar.wgst || 0;
+            const maxReportedWind = Math.max(windSpd, windGust);
+            document.getElementById('live-wind').innerText = `${windSpd} kt` + (windGust > 0 ? ` G${windGust}` : '');
+            let isWindGo = maxReportedWind <= maxWind;
+            setBadge('badge-wind', isWindGo);
+
+            const windDir = metar.wdir || null;
+            let crosswind = calculateCrosswind(windDir, maxReportedWind, currentRwy); 
+            document.getElementById('live-xwind').innerText = windDir ? `${crosswind} kt` : 'VRB';
+            let isXwindGo = crosswind <= maxXwind;
+            setBadge('badge-xwind', isXwindGo);
+
+            let ceilingValue = 99999; 
+            if (metar.clouds) {
+                for (let layer of metar.clouds) {
+                    if (['BKN', 'OVC', 'VV'].includes(layer.cover)) {
+                        ceilingValue = layer.base || 0;
+                        break; 
+                    }
+                }
+            }
+            document.getElementById('live-ceil').innerText = ceilingValue === 99999 ? "Unlimited" : `${ceilingValue} ft`;
+            let isCeilGo = ceilingValue >= minCeil;
+            setBadge('badge-ceil', isCeilGo);
+
+            // Master Status Update
+            const masterGo = isWindGo && isXwindGo && isCeilGo;
+            const mText = document.querySelector('.master-decision .status');
+            const mBox = document.querySelector('.master-decision');
+
+            if (masterGo) {
+                mText.innerText = "GO";
+                mBox.style.background = "linear-gradient(135deg, #14532d, #22c55e)";
+                mBox.style.borderColor = "#16a34a";
+            } else {
+                mText.innerText = "NO-GO";
+                mBox.style.background = "linear-gradient(135deg, #7f1d1d, #ef4444)";
+                mBox.style.borderColor = "#b91c1c";
+            }
+            
+            const timeEl = document.getElementById('metar-time');
+            if (timeEl) timeEl.innerText = `Report Time: ${metar.obsTime || 'Unknown'}`;
+
+        } catch (error) {
+            console.error("Weather Engine Error:", error);
+            metarBox.innerText = `Error: ${error.message}`;
+            
+            // Safe fallback to NO-GO
+            setBadge('badge-wind', false); setBadge('badge-ceil', false); setBadge('badge-xwind', false);
+            document.querySelector('.master-decision .status').innerText = "NO-GO";
+            document.querySelector('.master-decision').style.background = "linear-gradient(135deg, #7f1d1d, #ef4444)";
+            document.querySelector('.master-decision').style.borderColor = "#b91c1c";
+        }
+    }
+
+    // --- 6. STARTUP ---
+    updateClocks();
+    updateUI(); 
+    checkWeather(); 
+    setInterval(checkWeather, 300000); 
+</script>
+</body>
+</html>
