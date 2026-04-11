@@ -91,13 +91,6 @@
         .checklist-text { font-size: 0.95rem; color: #e2e8f0; line-height: 1.4;}
         .checklist-subtext { display: block; font-size: 0.8rem; color: #94a3b8; margin-top: 4px;}
         .reset-btn { background: #334155; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; float: right; margin-top: -35px;}
-
-        /* --- TV MODE OVERLAY --- */
-        #tv-mode-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0b111a; z-index: 9999; padding: 20px; box-sizing: border-box; overflow-y: auto; display: flex; flex-direction: column;}
-        .tv-header { display: flex; justify-content: center; align-items: center; gap: 40px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 20px; position: relative;}
-        .tv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex-grow: 1; }
-        .tv-col { display: flex; flex-direction: column; gap: 20px; }
-        .tv-card { background: #15202b; border: 2px solid #334155; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; }
     </style>
 </head>
 <body>
@@ -108,12 +101,12 @@
 </div>
 
 <div class="header-container">
-    <div class="clock-box">
+    <div class="clock-box" id="dep-clock-box">
         <span class="clock-label" id="dep-clock-title">DEP LOCAL TIME</span>
         <span class="clock-time" id="clock-dep">--</span>
     </div>
 
-    <div class="search-box">
+    <div class="search-box" id="main-search-box">
         <div class="search-row">
             <span class="search-label">DEP</span>
             <input type="text" id="input-dep" class="search-input" placeholder="KPVU" maxlength="4" onkeypress="handleEnter(event)">
@@ -125,7 +118,13 @@
         <button class="search-btn" onclick="executeSearch()">SEARCH ROUTE</button>
     </div>
 
-    <div class="clock-box">
+    <div class="search-box hidden" id="tv-title-box" style="justify-content:center; align-items:center; padding: 15px 30px; background: transparent; border: 2px solid var(--accent-blue);">
+        <span style="color:var(--accent-blue); font-size: 2.5rem; font-weight: 900; letter-spacing: 5px; margin:0;" id="tv-icao-display">--</span>
+        <span style="color:#94a3b8; font-size: 0.8rem; font-weight: bold; margin-bottom: 10px;">TV MODE ACTIVE</span>
+        <button onclick="exitTvMode()" style="background:var(--red-fail); color:white; border:none; padding:8px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">EXIT TV MODE</button>
+    </div>
+
+    <div class="clock-box" id="arr-clock-box">
         <span class="clock-label" id="arr-clock-title">ARR LOCAL TIME</span>
         <span class="clock-time" id="clock-arr">--</span>
     </div>
@@ -136,7 +135,7 @@
     </div>
 </div>
 
-<div class="tabs-nav">
+<div class="tabs-nav" id="main-tabs-nav">
     <button class="tab-btn active" onclick="openTab('tab-overview', this)">1. Overview</button>
     <button class="tab-btn" onclick="openTab('tab-pilot', this)">2. Pilot</button>
     <button class="tab-btn" onclick="openTab('tab-aircraft', this)">3. Aircraft</button>
@@ -145,216 +144,202 @@
     <button class="tab-btn" onclick="openTab('tab-91103', this)">6. 91.103</button>
 </div>
 
-<div id="tab-overview" class="tab-content active">
+<div class="dashboard-container" id="main-dashboard-container">
     
-    <div class="grid-3">
-        <div class="card">
-            <h2>DEPARTURE MINS <span id="display-dep-icao" style="color:white; margin-left:10px;">--</span></h2>
-            <button class="edit-btn" onclick="toggleEdit()">EDIT MINS</button>
-        
-            <div id="display-mode">
-                <div class="min-row"><div class="min-data">Wind: <span id="live-wind">--</span> <span style="font-size:0.65rem;">(MAX: <span id="set-wind">20</span> kt)</span></div><div id="badge-wind" class="badge">--</div></div>
-                <div class="min-row"><div class="min-data">Ceiling: <span id="live-ceil">--</span> <span style="font-size:0.65rem;">(MIN: <span id="set-ceil">1500</span> ft)</span></div><div id="badge-ceil" class="badge">--</div></div>
-                <div class="min-row"><div class="min-data">Crosswind: <span id="live-xwind">--</span> <span style="font-size:0.65rem;">(MAX: <span id="set-xwind">10</span> kt | Rwy <span id="display-rwy">04</span>)</span></div><div id="badge-xwind" class="badge">--</div></div>
-                <div style="margin-top: 10px; font-size: 0.75rem; color: #aaa;" id="metar-time"></div>
+    <div id="tab-overview" class="tab-content active">
+        <div class="grid-3">
+            <div class="card">
+                <h2>DEPARTURE MINS <span id="display-dep-icao" style="color:white; margin-left:10px;">--</span></h2>
+                <button class="edit-btn" onclick="toggleEdit()">EDIT MINS</button>
+                <div id="display-mode">
+                    <div class="min-row"><div class="min-data">Wind: <span id="live-wind">--</span> <span style="font-size:0.65rem;">(MAX: <span id="set-wind">20</span> kt)</span></div><div id="badge-wind" class="badge">--</div></div>
+                    <div class="min-row"><div class="min-data">Ceiling: <span id="live-ceil">--</span> <span style="font-size:0.65rem;">(MIN: <span id="set-ceil">1500</span> ft)</span></div><div id="badge-ceil" class="badge">--</div></div>
+                    <div class="min-row"><div class="min-data">Crosswind: <span id="live-xwind">--</span> <span style="font-size:0.65rem;">(MAX: <span id="set-xwind">10</span> kt | Rwy <span id="display-rwy">04</span>)</span></div><div id="badge-xwind" class="badge">--</div></div>
+                    <div style="margin-top: 10px; font-size: 0.75rem; color: #aaa;" id="metar-time"></div>
+                </div>
+                <div id="edit-mode" class="edit-form hidden">
+                    <label>Planned Runway (e.g., 04, 22): <input type="number" id="input-rwy" min="1" max="36"></label>
+                    <label>Max Wind (kts): <input type="number" id="input-wind"></label>
+                    <label>Min Ceiling (ft): <input type="number" id="input-ceil" step="100"></label>
+                    <label>Max Crosswind (kts): <input type="number" id="input-xwind"></label>
+                    <button class="save-btn" onclick="saveSettings()">SAVE MINIMUMS</button>
+                </div>
             </div>
-        
-            <div id="edit-mode" class="edit-form hidden">
-                <label>Planned Runway (e.g., 04, 22): <input type="number" id="input-rwy" min="1" max="36"></label>
-                <label>Max Wind (kts): <input type="number" id="input-wind"></label>
-                <label>Min Ceiling (ft): <input type="number" id="input-ceil" step="100"></label>
-                <label>Max Crosswind (kts): <input type="number" id="input-xwind"></label>
-                <button class="save-btn" onclick="saveSettings()">SAVE MINIMUMS</button>
+
+            <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+                <div class="master-decision" id="master-decision-box">
+                    <p class="status" id="master-status-text" style="margin:0;">--</p>
+                </div>
+                <div style="text-align:center; font-size:0.75rem; color:#94a3b8; margin-top:10px;">Evaluates Departure Winds and Ceilings</div>
+            </div>
+
+            <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+                <h2 style="border:none;">LiveATC Audio</h2>
+                <a id="atis-link-dep" href="#" target="_blank" class="com-btn" style="border-color:var(--accent-blue);">
+                    DEP: <span id="liveatc-btn-dep">--</span> ➔
+                </a>
+                <a id="atis-link-arr" href="#" target="_blank" class="com-btn" style="border-color:var(--accent-orange); display:none;">
+                    ARR: <span id="liveatc-btn-arr">--</span> ➔
+                </a>
             </div>
         </div>
 
-        <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
-            <div class="master-decision" id="master-decision-box">
-                <p class="status" id="master-status-text" style="margin:0;">--</p>
+        <div class="grid-2">
+            <div class="card">
+                <h2 class="h2-dep">DEP WEATHER (METAR/TAF)</h2>
+                <div id="metar-box-dep" class="metar-display">Awaiting search...</div>
+                <div id="taf-box-dep" class="metar-display" style="font-size: 0.85rem;"></div>
             </div>
-            <div style="text-align:center; font-size:0.75rem; color:#94a3b8; margin-top:10px;">
-                Evaluates Departure Winds and Ceilings
-            </div>
-        </div>
-
-        <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
-            <h2 style="border:none;">LiveATC Audio</h2>
-            <a id="atis-link-dep" href="#" target="_blank" class="com-btn" style="border-color:var(--accent-blue);">
-                DEP: <span id="liveatc-btn-dep">--</span> ➔
-            </a>
-            <a id="atis-link-arr" href="#" target="_blank" class="com-btn" style="border-color:var(--accent-orange); display:none;">
-                ARR: <span id="liveatc-btn-arr">--</span> ➔
-            </a>
-        </div>
-    </div>
-
-    <div class="grid-2">
-        <div class="card">
-            <h2 class="h2-dep">DEP WEATHER (METAR/TAF)</h2>
-            <div id="metar-box-dep" class="metar-display">Awaiting search...</div>
-            <div id="taf-box-dep" class="metar-display" style="font-size: 0.85rem;"></div>
-        </div>
-        <div class="card">
-            <h2 class="h2-arr">ARR WEATHER (METAR/TAF)</h2>
-            <div id="metar-box-arr" class="metar-display">Awaiting search...</div>
-            <div id="taf-box-arr" class="metar-display" style="font-size: 0.85rem;"></div>
-        </div>
-    </div>
-
-    <div class="grid-2">
-        <div class="card">
-            <h2 class="h2-dep">DEP TRAFFIC (ADS-B)</h2>
-            <iframe id="adsb-iframe-dep" src="about:blank"></iframe>
-        </div>
-        <div class="card">
-            <h2 class="h2-arr">ARR TRAFFIC (ADS-B)</h2>
-            <iframe id="adsb-iframe-arr" src="about:blank"></iframe>
-        </div>
-    </div>
-</div>
-
-<div id="tab-pilot" class="tab-content">
-    <div class="grid-2">
-        <div class="card">
-            <h2>IMSAFE & Legal <button class="reset-btn" onclick="resetChecks('pilot-checks')">RESET</button></h2>
-            <div id="pilot-checks">
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">I - Illness<span class="checklist-subtext">Am I feeling well today?</span></div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">M - Medication<span class="checklist-subtext">Taking any prescription or OTC drugs?</span></div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">S - Stress<span class="checklist-subtext">Psychological pressures from work/life?</span></div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Alcohol<span class="checklist-subtext">8 hours bottle to throttle? No lingering effects?</span></div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">F - Fatigue<span class="checklist-subtext">Adequate sleep? Physical exhaustion?</span></div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">E - Emotion / Eating<span class="checklist-subtext">Emotionally stable? Properly nourished?</span></div></label>
-                <hr style="border-color:#334155; margin:15px 0;">
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Current Flight Review (24 Cal. Months)</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Current Medical Certificate</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Government Photo ID & Pilot Certificate</div></label>
+            <div class="card">
+                <h2 class="h2-arr">ARR WEATHER (METAR/TAF)</h2>
+                <div id="metar-box-arr" class="metar-display">Awaiting search...</div>
+                <div id="taf-box-arr" class="metar-display" style="font-size: 0.85rem;"></div>
             </div>
         </div>
-        <div class="card">
-            <h2>Hazardous Attitudes <button class="reset-btn" onclick="resetChecks('attitude-checks')">RESET</button></h2>
-            <div id="attitude-checks">
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Anti-Authority <span class="checklist-subtext">Antidote: Follow the rules. They are usually right.</span></div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Impulsivity <span class="checklist-subtext">Antidote: Not so fast. Think first.</span></div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Invulnerability <span class="checklist-subtext">Antidote: It could happen to me.</span></div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Macho <span class="checklist-subtext">Antidote: Taking chances is foolish.</span></div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Resignation <span class="checklist-subtext">Antidote: I am not helpless. I can make a difference.</span></div></label>
-                <hr style="border-color:#334155; margin:15px 0;">
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Checked Operational Pitfalls<span class="checklist-subtext">Peer pressure, get-there-itis, scud running, VFR into IMC.</span></div></label>
+
+        <div class="grid-2">
+            <div class="card">
+                <h2 class="h2-dep">DEP TRAFFIC (ADS-B)</h2>
+                <iframe id="adsb-iframe-dep" src="about:blank"></iframe>
+            </div>
+            <div class="card">
+                <h2 class="h2-arr">ARR TRAFFIC (ADS-B)</h2>
+                <iframe id="adsb-iframe-arr" src="about:blank"></iframe>
             </div>
         </div>
     </div>
-</div>
 
-<div id="tab-aircraft" class="tab-content">
-    <div class="grid-2">
-        <div class="card">
-            <h2>Aircraft Docs & Currency <button class="reset-btn" onclick="resetChecks('ac-docs')">RESET</button></h2>
-            <div id="ac-docs">
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Recency of Experience<span class="checklist-subtext">3 takeoffs/landings in 90 days.</span></div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Performance Calculations complete</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Weight & Balance computed</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Fuel Requirements met (FAR 91.151/167)</div></label>
-                <hr style="border-color:#334155; margin:15px 0;">
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Airworthiness Certificate</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">R - Registration Certificate</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">O - Operating Limitations (POH)</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">W - Weight and Balance</div></label>
+    <div id="tab-pilot" class="tab-content">
+        <div class="grid-2">
+            <div class="card">
+                <h2>IMSAFE & Legal <button class="reset-btn" onclick="resetChecks('pilot-checks')">RESET</button></h2>
+                <div id="pilot-checks">
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">I - Illness<span class="checklist-subtext">Am I feeling well today?</span></div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">M - Medication<span class="checklist-subtext">Taking any prescription or OTC drugs?</span></div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">S - Stress<span class="checklist-subtext">Psychological pressures from work/life?</span></div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Alcohol<span class="checklist-subtext">8 hours bottle to throttle? No lingering effects?</span></div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">F - Fatigue<span class="checklist-subtext">Adequate sleep? Physical exhaustion?</span></div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">E - Emotion / Eating<span class="checklist-subtext">Emotionally stable? Properly nourished?</span></div></label>
+                    <hr style="border-color:#334155; margin:15px 0;">
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Current Flight Review (24 Cal. Months)</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Current Medical Certificate</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Government Photo ID & Pilot Certificate</div></label>
+                </div>
             </div>
-        </div>
-        <div class="card">
-            <h2>Inspections & Equipment <button class="reset-btn" onclick="resetChecks('ac-insp')">RESET</button></h2>
-            <div id="ac-insp">
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Annual Inspection</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">V - VOR Check (30 days, IFR)</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">1 - 100 Hour Inspection (If for hire)</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Altimeter / Pitot Static (24 months)</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">T - Transponder (24 months)</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">E - ELT (12 months)</div></label>
+            <div class="card">
+                <h2>Hazardous Attitudes <button class="reset-btn" onclick="resetChecks('attitude-checks')">RESET</button></h2>
+                <div id="attitude-checks">
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Anti-Authority <span class="checklist-subtext">Antidote: Follow the rules. They are usually right.</span></div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Impulsivity <span class="checklist-subtext">Antidote: Not so fast. Think first.</span></div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Invulnerability <span class="checklist-subtext">Antidote: It could happen to me.</span></div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Macho <span class="checklist-subtext">Antidote: Taking chances is foolish.</span></div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Resignation <span class="checklist-subtext">Antidote: I am not helpless. I can make a difference.</span></div></label>
+                    <hr style="border-color:#334155; margin:15px 0;">
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Checked Operational Pitfalls<span class="checklist-subtext">Peer pressure, get-there-itis, scud running, VFR into IMC.</span></div></label>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div id="tab-env" class="tab-content">
-    <div class="grid-2">
-        <div class="card">
-            <h2>Flight Plan & Factors <button class="reset-btn" onclick="resetChecks('env-checks')">RESET</button></h2>
-            <div id="env-checks">
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Flight Type selected (VFR / IFR)</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">NOTAMs Checked</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">RAIM / WAAS Outages Checked</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">ATC Delays Checked</div></label>
-                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Chart Supplement Reviewed</div></label>
+    <div id="tab-aircraft" class="tab-content">
+        <div class="grid-2">
+            <div class="card">
+                <h2>Aircraft Docs & Currency <button class="reset-btn" onclick="resetChecks('ac-docs')">RESET</button></h2>
+                <div id="ac-docs">
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Recency of Experience<span class="checklist-subtext">3 takeoffs/landings in 90 days.</span></div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Performance Calculations complete</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Weight & Balance computed</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Fuel Requirements met (FAR 91.151/167)</div></label>
+                    <hr style="border-color:#334155; margin:15px 0;">
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Airworthiness Certificate</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">R - Registration Certificate</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">O - Operating Limitations (POH)</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">W - Weight and Balance</div></label>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Inspections & Equipment <button class="reset-btn" onclick="resetChecks('ac-insp')">RESET</button></h2>
+                <div id="ac-insp">
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Annual Inspection</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">V - VOR Check (30 days, IFR)</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">1 - 100 Hour Inspection (If for hire)</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Altimeter / Pitot Static (24 months)</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">T - Transponder (24 months)</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">E - ELT (12 months)</div></label>
+                </div>
             </div>
         </div>
+    </div>
+
+    <div id="tab-env" class="tab-content">
+        <div class="grid-2">
+            <div class="card">
+                <h2>Flight Plan & Factors <button class="reset-btn" onclick="resetChecks('env-checks')">RESET</button></h2>
+                <div id="env-checks">
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Flight Type selected (VFR / IFR)</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">NOTAMs Checked</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">RAIM / WAAS Outages Checked</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">ATC Delays Checked</div></label>
+                    <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Chart Supplement Reviewed</div></label>
+                </div>
+            </div>
+            <div class="card">
+                <h2 class="h2-dep">Departure Sectional Chart</h2>
+                <iframe id="sectional-iframe" src="about:blank" style="height: 300px;"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-external" class="tab-content">
         <div class="card">
-            <h2 class="h2-dep">Departure Sectional Chart</h2>
-            <iframe id="sectional-iframe" src="about:blank" style="height: 300px;"></iframe>
+            <h2>External Pressures <button class="reset-btn" onclick="resetChecks('ext-checks')">RESET</button></h2>
+            <div id="ext-checks">
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Passengers briefed (Seatbelts, Air vents, Fire ext, Exit)</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Expectation Management (Divert plan discussed)</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">No 'Get-There-Itis'</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Flight Bag packed (iPad charged)</div></label>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="tab-external" class="tab-content">
-    <div class="card">
-        <h2>External Pressures <button class="reset-btn" onclick="resetChecks('ext-checks')">RESET</button></h2>
-        <div id="ext-checks">
-            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Passengers briefed (Seatbelts, Air vents, Fire ext, Exit)</div></label>
-            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Expectation Management (Divert plan discussed)</div></label>
-            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">No 'Get-There-Itis'</div></label>
-            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Flight Bag packed (iPad charged)</div></label>
-        </div>
-    </div>
-</div>
-
-<div id="tab-91103" class="tab-content">
-    <div class="card">
-        <h2>FAR 91.103 (NWKRAFT) <button class="reset-btn" onclick="resetChecks('nwkraft-checks')">RESET</button></h2>
-        <div id="nwkraft-checks">
-            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">N - NOTAMs checked</div></label>
-            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">W - Weather reports and forecasts reviewed</div></label>
-            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">K - Known ATC traffic delays</div></label>
-            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">R - Runway lengths of intended use</div></label>
-            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Alternatives available</div></label>
-            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">F - Fuel requirements computed</div></label>
-            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">T - Takeoff and landing distance data</div></label>
+    <div id="tab-91103" class="tab-content">
+        <div class="card">
+            <h2>FAR 91.103 (NWKRAFT) <button class="reset-btn" onclick="resetChecks('nwkraft-checks')">RESET</button></h2>
+            <div id="nwkraft-checks">
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">N - NOTAMs checked</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">W - Weather reports and forecasts reviewed</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">K - Known ATC traffic delays</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">R - Runway lengths of intended use</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Alternatives available</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">F - Fuel requirements computed</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">T - Takeoff and landing distance data</div></label>
+            </div>
         </div>
     </div>
 </div>
 
-<div id="tv-mode-overlay" class="hidden">
-    <button onclick="exitTvMode()" style="position:absolute; top:20px; right:20px; background:var(--red-fail); color:white; border:none; padding:10px 20px; font-weight:bold; border-radius:6px; cursor:pointer; z-index: 10000;">EXIT TV MODE</button>
-    
-    <div class="tv-header">
-        <div class="clock-box" style="background:transparent; border-color:#475569;">
-            <span class="clock-label">LOCAL TIME</span>
-            <span class="clock-time" id="tv-clock-local" style="color:var(--accent-blue); font-size:1.5rem;">--</span>
-        </div>
-        <h1 style="color:var(--accent-blue); text-align:center; font-size:4rem; margin:0 40px; font-weight:900; letter-spacing: 5px;">📺 <span id="tv-icao-title">--</span></h1>
-        <div class="clock-box" style="background:transparent; border-color:#475569;">
-            <span class="clock-label">ZULU TIME (UTC)</span>
-            <span class="clock-time clock-zulu" id="tv-clock-zulu" style="font-size:1.5rem;">--</span>
-        </div>
-    </div>
-    
-    <div class="tv-grid">
-        <div class="tv-col">
-            <div class="tv-card" style="flex: 1; padding: 30px;">
-                <h2 style="font-size:1.8rem; color:var(--accent-blue); margin-bottom: 20px;">METAR</h2>
-                <div id="tv-metar" class="metar-display" style="font-size:1.8rem; margin:0; line-height: 1.6;">Loading...</div>
+<div class="dashboard-container hidden" id="tv-dashboard-container">
+    <div class="grid-2" style="height: calc(100vh - 200px); grid-template-columns: 1fr 1.5fr;">
+        <div style="display:flex; flex-direction:column; gap:20px; height:100%;">
+            <div class="card" style="flex: 1; padding: 25px;">
+                <h2 style="font-size:1.5rem;">METAR</h2>
+                <div id="tv-metar" class="metar-display" style="font-size:1.6rem; line-height:1.6; margin:0;">Loading...</div>
             </div>
-            <div class="tv-card" style="flex: 2; overflow-y:auto; padding: 30px;">
-                <h2 style="font-size:1.8rem; color:var(--accent-blue); margin-bottom: 20px;">TAF</h2>
-                <div id="tv-taf" class="metar-display" style="font-size:1.5rem; margin:0; line-height: 1.6;">Loading...</div>
+            <div class="card" style="flex: 2; overflow:hidden; padding: 25px;">
+                <h2 style="font-size:1.5rem;">TAF</h2>
+                <div id="tv-taf" class="metar-display" style="font-size:1.4rem; line-height:1.6; height:100%; overflow-y:auto; margin:0;">Loading...</div>
             </div>
         </div>
-        <div class="tv-card" style="padding:0; border: none; overflow: hidden;">
-            <iframe id="tv-adsb" src="about:blank" style="height:100%; width:100%;"></iframe>
+        <div class="card" style="padding:0; overflow:hidden; border:2px solid var(--border-color);">
+            <iframe id="tv-adsb" src="about:blank" style="width:100%; height:100%;"></iframe>
         </div>
     </div>
 </div>
 
 <script>
-    // --- 0. TAB SYSTEM ---
+    // --- 0. UI TOGGLES ---
+    let isTvMode = false;
+
     function openTab(tabId, btnElement) {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -366,43 +351,37 @@
     }
 
     // --- 1. STATE MANAGEMENT ---
-    let appState = JSON.parse(localStorage.getItem('aeroNerdV7')) || {
-        depIcao: 'KPVU', arrIcao: 'KSLC',
-        rwy: 4, maxXwind: 10, maxWind: 20, minCeil: 1500
+    let appState = JSON.parse(localStorage.getItem('aeroNerdV8')) || {
+        depIcao: 'KPVU', arrIcao: 'KSLC', rwy: 4, maxXwind: 10, maxWind: 20, minCeil: 1500
     };
     
     let depTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
     let arrTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
     let tvTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    // --- 2. CLOCK ENGINE (WITH DATES) ---
+    // --- 2. CLOCK ENGINE ---
     function updateClocks() {
         try {
             const now = new Date();
             const dateOpts = { dateStyle: 'short', timeStyle: 'short', hour12: false };
             
-            // Dashboard Clocks
             const depEl = document.getElementById('clock-dep');
-            if(depEl) depEl.innerText = now.toLocaleString('en-US', { timeZone: depTZ, ...dateOpts });
+            if(depEl) {
+                // If TV mode is on, the left clock tracks TV timezone. Else it tracks DEP.
+                depEl.innerText = now.toLocaleString('en-US', { timeZone: isTvMode ? tvTZ : depTZ, ...dateOpts });
+            }
             
             const arrEl = document.getElementById('clock-arr');
             if(arrEl) arrEl.innerText = now.toLocaleString('en-US', { timeZone: arrTZ, ...dateOpts });
             
             const zuluEl = document.getElementById('clock-zulu');
             if(zuluEl) zuluEl.innerText = now.toLocaleString('en-US', { timeZone: 'UTC', ...dateOpts }) + ' Z';
-
-            // TV Mode Clocks
-            const tvLocalEl = document.getElementById('tv-clock-local');
-            if(tvLocalEl) tvLocalEl.innerText = now.toLocaleString('en-US', { timeZone: tvTZ, ...dateOpts });
-            
-            const tvZuluEl = document.getElementById('tv-clock-zulu');
-            if(tvZuluEl) tvZuluEl.innerText = now.toLocaleString('en-US', { timeZone: 'UTC', ...dateOpts }) + ' Z';
             
         } catch(e) { console.error("Clock error"); }
     }
     setInterval(updateClocks, 1000);
 
-    // --- 3. UI CONTROLS ---
+    // --- 3. DASHBOARD CONTROLS ---
     function handleEnter(e) { if (e.key === 'Enter') executeSearch(); }
 
     function executeSearch() {
@@ -413,7 +392,7 @@
         if (arrInput.length >= 3) appState.arrIcao = arrInput;
         else appState.arrIcao = ""; 
         
-        localStorage.setItem('aeroNerdV7', JSON.stringify(appState));
+        localStorage.setItem('aeroNerdV8', JSON.stringify(appState));
         updateStaticUI();
         
         document.getElementById('master-status-text').innerText = "--";
@@ -439,7 +418,7 @@
         appState.maxXwind = parseInt(document.getElementById('input-xwind').value) || 10;
         appState.maxWind = parseInt(document.getElementById('input-wind').value) || 20;
         appState.minCeil = parseInt(document.getElementById('input-ceil').value) || 1500;
-        localStorage.setItem('aeroNerdV7', JSON.stringify(appState));
+        localStorage.setItem('aeroNerdV8', JSON.stringify(appState));
         
         document.getElementById('edit-mode').classList.add('hidden');
         document.getElementById('display-mode').classList.remove('hidden');
@@ -474,7 +453,7 @@
         }
     }
 
-    // --- 4. FLIGHT CATEGORY & COLOR PARSING ---
+    // --- 4. FLIGHT CATEGORY & TAF PARSING ---
     function determineFlightCategory(ceiling, visibility) {
         if (ceiling < 500 || visibility < 1) return 'lifr';
         if (ceiling < 1000 || visibility < 3) return 'ifr';
@@ -493,7 +472,7 @@
         for(let line of lines) {
             if(!line.trim()) continue;
             
-            // Extract Visibility
+            // Visibility Check
             const visMatch = line.match(/(?:^|\s)(P6SM|M?\d\/\dSM|\d+\s\d\/\dSM|\d+SM)/);
             if (visMatch) {
                 let vStr = visMatch[1].replace('SM','').replace('P','').replace('M','');
@@ -510,7 +489,7 @@
                 }
             }
 
-            // Extract Ceiling
+            // Ceiling Check
             const cloudMatches = line.match(/(BKN|OVC|VV)(\d{3})/g);
             if (line.includes('CLR') || line.includes('SKC') || line.includes('CAVOK')) {
                 currentCeil = 99999;
@@ -528,7 +507,7 @@
         return formattedLines.join('');
     }
 
-    // --- 5. BACKGROUND TIMEZONE ENGINE ---
+    // --- 5. TIMEZONE & CALCS ---
     async function updateAirportTimezone(lat, lon, type) {
         try {
             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`);
@@ -558,7 +537,7 @@
         }
     }
 
-    // --- 6. VERIFIED CODETABS FETCH ENGINE ---
+    // --- 6. WEATHER FETCH ---
     async function fetchAirportData(type, icao) {
         const metarBox = document.getElementById(type === 'tv' ? 'tv-metar' : `metar-box-${type}`);
         const tafBox = document.getElementById(type === 'tv' ? 'tv-taf' : `taf-box-${type}`);
@@ -567,11 +546,10 @@
         if(!metarBox) return;
 
         metarBox.innerText = `Fetching via CodeTabs for ${icao}...`;
-        metarBox.className = "metar-display"; // Reset colors
+        metarBox.className = "metar-display"; 
         tafBox.innerText = 'Checking TAF...';
 
         try {
-            // METAR Fetch
             const metarTarget = `https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`;
             const metarUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(metarTarget)}`;
             
@@ -586,7 +564,6 @@
             if(!data || data.length === 0) throw new Error(`No recent METAR found for ${icao}.`);
             const metar = data[0];
 
-            // Flight Category Parsing
             let ceilVal = 99999;
             if(metar.clouds) {
                 for(let layer of metar.clouds) {
@@ -605,24 +582,20 @@
                 }
             }
 
-            // Apply ForeFlight Colors to METAR text
             const flightCategory = determineFlightCategory(ceilVal, visVal);
             metarBox.classList.add(flightCategory);
             metarBox.innerText = metar.rawOb || "Raw string missing.";
 
-            // Update Maps & Timezone
             if(metar.lat && metar.lon) {
                 if(mapFrame) mapFrame.src = `https://globe.adsbexchange.com/?lat=${metar.lat}&lon=${metar.lon}&zoom=11`;
                 updateAirportTimezone(metar.lat, metar.lon, type);
                 
-                // If Departure, update SkyVector on EnVironment Tab
                 if(type === 'dep') {
                     const secFrame = document.getElementById('sectional-iframe');
                     if(secFrame) secFrame.src = `https://skyvector.com/?ll=${metar.lat},${metar.lon}&chart=301&zoom=1`;
                 }
             }
 
-            // TAF Fetch (Independent)
             try {
                 const tafTarget = `https://aviationweather.gov/api/data/taf?ids=${icao}&format=raw`;
                 const tafUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(tafTarget)}`;
@@ -637,7 +610,6 @@
                 }
             } catch(e) { tafBox.innerText = "TAF fetch failed."; }
 
-            // Departure Specific Minimums Logic
             if(type === 'dep') {
                 const windSpd = metar.wspd || 0;
                 const windGust = metar.wgst || 0;
@@ -657,7 +629,6 @@
                 let isCeilGo = ceilVal >= appState.minCeil;
                 setBadge('badge-ceil', isCeilGo);
 
-                // Master Decision
                 const masterGo = isWindGo && isXwindGo && isCeilGo;
                 const mText = document.getElementById('master-status-text');
                 const mBox = document.getElementById('master-decision-box');
@@ -694,47 +665,62 @@
         const tvIcaoInput = prompt("Enter ICAO for TV Mode (e.g. KPVU):", appState.depIcao);
         if(tvIcaoInput && tvIcaoInput.trim().length >= 3) {
             const icao = tvIcaoInput.trim().toUpperCase();
+            isTvMode = true;
             
-            // Hide main UI
-            document.querySelector('.title-bar').classList.add('hidden');
-            document.querySelector('.header-container').classList.add('hidden');
-            document.querySelector('.tabs-nav').classList.add('hidden');
-            document.querySelector('.dashboard-container').classList.add('hidden');
+            // Hide Main App UI
+            document.getElementById('main-search-box').classList.add('hidden');
+            document.getElementById('arr-clock-box').classList.add('hidden');
+            document.getElementById('main-tabs-nav').classList.add('hidden');
+            document.getElementById('main-dashboard-container').classList.add('hidden');
             
-            // Show Overlay
-            document.getElementById('tv-mode-overlay').classList.remove('hidden');
-            document.getElementById('tv-icao-title').innerText = icao;
+            // Show TV UI
+            document.getElementById('tv-title-box').classList.remove('hidden');
+            document.getElementById('tv-dashboard-container').classList.remove('hidden');
             
-            // Fetch TV Data
+            document.getElementById('tv-icao-display').innerText = icao;
+            document.getElementById('dep-clock-title').innerText = `${icao} LOCAL TIME`;
+            
+            // Fetch Data
             fetchAirportData('tv', icao);
+            
+            // Auto Popup LiveATC
+            try { window.open('https://www.liveatc.net/search/?icao=' + icao, 'LiveATC_TV', 'width=500,height=600,scrollbars=yes'); } 
+            catch(e) { console.log("Popup blocked."); }
         }
     }
 
     function exitTvMode() {
-        document.getElementById('tv-mode-overlay').classList.add('hidden');
-        document.querySelector('.title-bar').classList.remove('hidden');
-        document.querySelector('.header-container').classList.remove('hidden');
-        document.querySelector('.tabs-nav').classList.remove('hidden');
-        document.querySelector('.dashboard-container').classList.remove('hidden');
+        isTvMode = false;
+        
+        // Show Main App UI
+        document.getElementById('main-search-box').classList.remove('hidden');
+        document.getElementById('arr-clock-box').classList.remove('hidden');
+        document.getElementById('main-tabs-nav').classList.remove('hidden');
+        document.getElementById('main-dashboard-container').classList.remove('hidden');
+        
+        // Hide TV UI
+        document.getElementById('tv-title-box').classList.add('hidden');
+        document.getElementById('tv-dashboard-container').classList.add('hidden');
+        
+        // Reset Clock Title
+        document.getElementById('dep-clock-title').innerText = `${appState.depIcao} LOCAL`;
+        updateClocks();
     }
 
     // --- 8. STARTUP ---
     updateStaticUI();
     updateClocks();
     
-    // Initial fetch
     if(appState.depIcao) fetchAirportData('dep', appState.depIcao);
     if(appState.arrIcao) fetchAirportData('arr', appState.arrIcao);
     
-    // Auto Refresh
     setInterval(() => {
-        if(document.getElementById('tv-mode-overlay').classList.contains('hidden')) {
+        if(isTvMode) {
+            const tvIcao = document.getElementById('tv-icao-display').innerText;
+            if(tvIcao && tvIcao !== '--') fetchAirportData('tv', tvIcao);
+        } else {
             if(appState.depIcao) fetchAirportData('dep', appState.depIcao);
             if(appState.arrIcao) fetchAirportData('arr', appState.arrIcao);
-        } else {
-            // Refresh TV mode if open
-            const tvIcao = document.getElementById('tv-icao-title').innerText;
-            if(tvIcao && tvIcao !== '--') fetchAirportData('tv', tvIcao);
         }
     }, 300000); 
 </script>
