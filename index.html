@@ -93,10 +93,11 @@
         .reset-btn { background: #334155; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; float: right; margin-top: -35px;}
 
         /* --- TV MODE OVERLAY --- */
-        #tv-mode-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0b111a; z-index: 9999; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        .tv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: calc(100vh - 100px); }
+        #tv-mode-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0b111a; z-index: 9999; padding: 20px; box-sizing: border-box; overflow-y: auto; display: flex; flex-direction: column;}
+        .tv-header { display: flex; justify-content: center; align-items: center; gap: 40px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 20px; position: relative;}
+        .tv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex-grow: 1; }
         .tv-col { display: flex; flex-direction: column; gap: 20px; }
-        .tv-card { background: #15202b; border: 2px solid #334155; border-radius: 12px; padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .tv-card { background: #15202b; border: 2px solid #334155; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; }
     </style>
 </head>
 <body>
@@ -321,23 +322,33 @@
 </div>
 
 <div id="tv-mode-overlay" class="hidden">
-    <button onclick="exitTvMode()" style="position:absolute; top:20px; right:20px; background:var(--red-fail); color:white; border:none; padding:10px 20px; font-weight:bold; border-radius:6px; cursor:pointer;">EXIT TV MODE</button>
-    <h1 style="color:var(--accent-blue); text-align:center; font-size:3rem; margin-top:0; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">📺 <span id="tv-icao-title">--</span></h1>
+    <button onclick="exitTvMode()" style="position:absolute; top:20px; right:20px; background:var(--red-fail); color:white; border:none; padding:10px 20px; font-weight:bold; border-radius:6px; cursor:pointer; z-index: 10000;">EXIT TV MODE</button>
+    
+    <div class="tv-header">
+        <div class="clock-box" style="background:transparent; border-color:#475569;">
+            <span class="clock-label">LOCAL TIME</span>
+            <span class="clock-time" id="tv-clock-local" style="color:var(--accent-blue); font-size:1.5rem;">--</span>
+        </div>
+        <h1 style="color:var(--accent-blue); text-align:center; font-size:4rem; margin:0 40px; font-weight:900; letter-spacing: 5px;">📺 <span id="tv-icao-title">--</span></h1>
+        <div class="clock-box" style="background:transparent; border-color:#475569;">
+            <span class="clock-label">ZULU TIME (UTC)</span>
+            <span class="clock-time clock-zulu" id="tv-clock-zulu" style="font-size:1.5rem;">--</span>
+        </div>
+    </div>
     
     <div class="tv-grid">
         <div class="tv-col">
-            <div class="tv-card" style="flex: 1;">
-                <h2 style="font-size:1.5rem; color:var(--text-main);">METAR</h2>
-                <div id="tv-metar" class="metar-display" style="font-size:1.8rem; margin:0;">Loading...</div>
+            <div class="tv-card" style="flex: 1; padding: 30px;">
+                <h2 style="font-size:1.8rem; color:var(--accent-blue); margin-bottom: 20px;">METAR</h2>
+                <div id="tv-metar" class="metar-display" style="font-size:1.8rem; margin:0; line-height: 1.6;">Loading...</div>
             </div>
-            <div class="tv-card" style="flex: 2; overflow:hidden;">
-                <h2 style="font-size:1.5rem; color:var(--text-main);">TAF</h2>
-                <div id="tv-taf" class="metar-display" style="font-size:1.5rem; height:100%; overflow-y:auto; margin:0;">Loading...</div>
+            <div class="tv-card" style="flex: 2; overflow-y:auto; padding: 30px;">
+                <h2 style="font-size:1.8rem; color:var(--accent-blue); margin-bottom: 20px;">TAF</h2>
+                <div id="tv-taf" class="metar-display" style="font-size:1.5rem; margin:0; line-height: 1.6;">Loading...</div>
             </div>
         </div>
-        <div class="tv-card">
-            <h2 style="font-size:1.5rem; color:var(--text-main);">LIVE TRAFFIC (ADS-B)</h2>
-            <iframe id="tv-adsb" src="about:blank" style="height:100%;"></iframe>
+        <div class="tv-card" style="padding:0; border: none; overflow: hidden;">
+            <iframe id="tv-adsb" src="about:blank" style="height:100%; width:100%;"></iframe>
         </div>
     </div>
 </div>
@@ -355,27 +366,37 @@
     }
 
     // --- 1. STATE MANAGEMENT ---
-    let appState = JSON.parse(localStorage.getItem('aeroNerdV6')) || {
+    let appState = JSON.parse(localStorage.getItem('aeroNerdV7')) || {
         depIcao: 'KPVU', arrIcao: 'KSLC',
         rwy: 4, maxXwind: 10, maxWind: 20, minCeil: 1500
     };
     
     let depTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
     let arrTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    let tvTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     // --- 2. CLOCK ENGINE (WITH DATES) ---
     function updateClocks() {
         try {
             const now = new Date();
+            const dateOpts = { dateStyle: 'short', timeStyle: 'short', hour12: false };
             
+            // Dashboard Clocks
             const depEl = document.getElementById('clock-dep');
-            if(depEl) depEl.innerText = now.toLocaleString('en-US', { timeZone: depTZ, dateStyle: 'short', timeStyle: 'short', hour12: false });
+            if(depEl) depEl.innerText = now.toLocaleString('en-US', { timeZone: depTZ, ...dateOpts });
             
             const arrEl = document.getElementById('clock-arr');
-            if(arrEl) arrEl.innerText = now.toLocaleString('en-US', { timeZone: arrTZ, dateStyle: 'short', timeStyle: 'short', hour12: false });
+            if(arrEl) arrEl.innerText = now.toLocaleString('en-US', { timeZone: arrTZ, ...dateOpts });
             
             const zuluEl = document.getElementById('clock-zulu');
-            if(zuluEl) zuluEl.innerText = now.toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'short', timeStyle: 'short', hour12: false }) + ' Z';
+            if(zuluEl) zuluEl.innerText = now.toLocaleString('en-US', { timeZone: 'UTC', ...dateOpts }) + ' Z';
+
+            // TV Mode Clocks
+            const tvLocalEl = document.getElementById('tv-clock-local');
+            if(tvLocalEl) tvLocalEl.innerText = now.toLocaleString('en-US', { timeZone: tvTZ, ...dateOpts });
+            
+            const tvZuluEl = document.getElementById('tv-clock-zulu');
+            if(tvZuluEl) tvZuluEl.innerText = now.toLocaleString('en-US', { timeZone: 'UTC', ...dateOpts }) + ' Z';
             
         } catch(e) { console.error("Clock error"); }
     }
@@ -390,9 +411,9 @@
         
         if (depInput.length >= 3) appState.depIcao = depInput;
         if (arrInput.length >= 3) appState.arrIcao = arrInput;
-        else appState.arrIcao = ""; // Clear if empty
+        else appState.arrIcao = ""; 
         
-        localStorage.setItem('aeroNerdV6', JSON.stringify(appState));
+        localStorage.setItem('aeroNerdV7', JSON.stringify(appState));
         updateStaticUI();
         
         document.getElementById('master-status-text').innerText = "--";
@@ -418,7 +439,7 @@
         appState.maxXwind = parseInt(document.getElementById('input-xwind').value) || 10;
         appState.maxWind = parseInt(document.getElementById('input-wind').value) || 20;
         appState.minCeil = parseInt(document.getElementById('input-ceil').value) || 1500;
-        localStorage.setItem('aeroNerdV6', JSON.stringify(appState));
+        localStorage.setItem('aeroNerdV7', JSON.stringify(appState));
         
         document.getElementById('edit-mode').classList.add('hidden');
         document.getElementById('display-mode').classList.remove('hidden');
@@ -502,7 +523,7 @@
             }
 
             let cat = determineFlightCategory(currentCeil, currentVis);
-            formattedLines.push(`<div style="color: ${catColors[cat]}; margin-bottom: 2px;">${line}</div>`);
+            formattedLines.push(`<div style="color: ${catColors[cat]}; margin-bottom: 4px;">${line}</div>`);
         }
         return formattedLines.join('');
     }
@@ -516,6 +537,7 @@
                 if(data.timezone) {
                     if(type === 'dep') depTZ = data.timezone;
                     if(type === 'arr') arrTZ = data.timezone;
+                    if(type === 'tv') tvTZ = data.timezone;
                     updateClocks();
                 }
             }
@@ -591,7 +613,7 @@
             // Update Maps & Timezone
             if(metar.lat && metar.lon) {
                 if(mapFrame) mapFrame.src = `https://globe.adsbexchange.com/?lat=${metar.lat}&lon=${metar.lon}&zoom=11`;
-                if(type !== 'tv') updateAirportTimezone(metar.lat, metar.lon, type);
+                updateAirportTimezone(metar.lat, metar.lon, type);
                 
                 // If Departure, update SkyVector on EnVironment Tab
                 if(type === 'dep') {
@@ -608,7 +630,6 @@
                 if(tafRes.ok) {
                     const tafText = await tafRes.text();
                     if(tafText.length > 5) {
-                        // Apply Line-by-Line ForeFlight Colors to TAF
                         tafBox.innerHTML = formatTafColors(tafText);
                     } else {
                         tafBox.innerText = "No TAF reported.";
@@ -684,15 +705,8 @@
             document.getElementById('tv-mode-overlay').classList.remove('hidden');
             document.getElementById('tv-icao-title').innerText = icao;
             
-            // Fetch TV Data using the existing verified engine
+            // Fetch TV Data
             fetchAirportData('tv', icao);
-            
-            // Attempt to auto-open LiveATC
-            try {
-                window.open('https://www.liveatc.net/search/?icao=' + icao, 'LiveATC_TV', 'width=500,height=600,scrollbars=yes');
-            } catch(e) {
-                console.log("Popup blocked by browser.");
-            }
         }
     }
 
