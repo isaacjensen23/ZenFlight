@@ -91,13 +91,19 @@
         .checklist-text { font-size: 0.95rem; color: #e2e8f0; line-height: 1.4;}
         .checklist-subtext { display: block; font-size: 0.8rem; color: #94a3b8; margin-top: 4px;}
         .reset-btn { background: #334155; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; float: right; margin-top: -35px;}
+
+        /* --- TV MODE OVERLAY --- */
+        #tv-mode-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0b111a; z-index: 9999; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .tv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: calc(100vh - 100px); }
+        .tv-col { display: flex; flex-direction: column; gap: 20px; }
+        .tv-card { background: #15202b; border: 2px solid #334155; border-radius: 12px; padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
     </style>
 </head>
 <body>
 
 <div class="title-bar">
     <h1>AeroNerd</h1>
-    <button class="tv-mode-btn" onclick="alert('TV MODE is currently INOP.')">📺 TV MODE</button>
+    <button class="tv-mode-btn" onclick="enterTvMode()">📺 TV MODE</button>
 </div>
 
 <div class="header-container">
@@ -185,12 +191,12 @@
         <div class="card">
             <h2 class="h2-dep">DEP WEATHER (METAR/TAF)</h2>
             <div id="metar-box-dep" class="metar-display">Awaiting search...</div>
-            <div id="taf-box-dep" class="metar-display" style="color: #facc15; font-size: 0.85rem;"></div>
+            <div id="taf-box-dep" class="metar-display" style="font-size: 0.85rem;"></div>
         </div>
         <div class="card">
             <h2 class="h2-arr">ARR WEATHER (METAR/TAF)</h2>
             <div id="metar-box-arr" class="metar-display">Awaiting search...</div>
-            <div id="taf-box-arr" class="metar-display" style="color: #facc15; font-size: 0.85rem;"></div>
+            <div id="taf-box-arr" class="metar-display" style="font-size: 0.85rem;"></div>
         </div>
     </div>
 
@@ -314,7 +320,29 @@
     </div>
 </div>
 
-</div> <script>
+<div id="tv-mode-overlay" class="hidden">
+    <button onclick="exitTvMode()" style="position:absolute; top:20px; right:20px; background:var(--red-fail); color:white; border:none; padding:10px 20px; font-weight:bold; border-radius:6px; cursor:pointer;">EXIT TV MODE</button>
+    <h1 style="color:var(--accent-blue); text-align:center; font-size:3rem; margin-top:0; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">📺 <span id="tv-icao-title">--</span></h1>
+    
+    <div class="tv-grid">
+        <div class="tv-col">
+            <div class="tv-card" style="flex: 1;">
+                <h2 style="font-size:1.5rem; color:var(--text-main);">METAR</h2>
+                <div id="tv-metar" class="metar-display" style="font-size:1.8rem; margin:0;">Loading...</div>
+            </div>
+            <div class="tv-card" style="flex: 2; overflow:hidden;">
+                <h2 style="font-size:1.5rem; color:var(--text-main);">TAF</h2>
+                <div id="tv-taf" class="metar-display" style="font-size:1.5rem; height:100%; overflow-y:auto; margin:0;">Loading...</div>
+            </div>
+        </div>
+        <div class="tv-card">
+            <h2 style="font-size:1.5rem; color:var(--text-main);">LIVE TRAFFIC (ADS-B)</h2>
+            <iframe id="tv-adsb" src="about:blank" style="height:100%;"></iframe>
+        </div>
+    </div>
+</div>
+
+<script>
     // --- 0. TAB SYSTEM ---
     function openTab(tabId, btnElement) {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -327,7 +355,7 @@
     }
 
     // --- 1. STATE MANAGEMENT ---
-    let appState = JSON.parse(localStorage.getItem('aeroNerdV5')) || {
+    let appState = JSON.parse(localStorage.getItem('aeroNerdV6')) || {
         depIcao: 'KPVU', arrIcao: 'KSLC',
         rwy: 4, maxXwind: 10, maxWind: 20, minCeil: 1500
     };
@@ -364,10 +392,9 @@
         if (arrInput.length >= 3) appState.arrIcao = arrInput;
         else appState.arrIcao = ""; // Clear if empty
         
-        localStorage.setItem('aeroNerdV5', JSON.stringify(appState));
+        localStorage.setItem('aeroNerdV6', JSON.stringify(appState));
         updateStaticUI();
         
-        // Reset and trigger fetches
         document.getElementById('master-status-text').innerText = "--";
         document.getElementById('master-decision-box').style.background = "#334155";
         document.getElementById('master-decision-box').style.borderColor = "#475569";
@@ -391,14 +418,13 @@
         appState.maxXwind = parseInt(document.getElementById('input-xwind').value) || 10;
         appState.maxWind = parseInt(document.getElementById('input-wind').value) || 20;
         appState.minCeil = parseInt(document.getElementById('input-ceil').value) || 1500;
-        localStorage.setItem('aeroNerdV5', JSON.stringify(appState));
+        localStorage.setItem('aeroNerdV6', JSON.stringify(appState));
         
         document.getElementById('edit-mode').classList.add('hidden');
         document.getElementById('display-mode').classList.remove('hidden');
         document.querySelector('.edit-btn').classList.remove('hidden');
         updateStaticUI(); 
         
-        // Re-run dep calculation
         if(appState.depIcao) fetchAirportData('dep', appState.depIcao);
     }
 
@@ -427,12 +453,58 @@
         }
     }
 
-    // --- 4. FLIGHT CATEGORY LOGIC ---
+    // --- 4. FLIGHT CATEGORY & COLOR PARSING ---
     function determineFlightCategory(ceiling, visibility) {
         if (ceiling < 500 || visibility < 1) return 'lifr';
         if (ceiling < 1000 || visibility < 3) return 'ifr';
         if (ceiling <= 3000 || visibility <= 5) return 'mvfr';
         return 'vfr';
+    }
+
+    function formatTafColors(tafText) {
+        let currentCeil = 99999;
+        let currentVis = 10;
+        let formattedLines = [];
+        const lines = tafText.split('\n');
+        
+        const catColors = { vfr: 'var(--vfr-green)', mvfr: 'var(--mvfr-blue)', ifr: 'var(--ifr-red)', lifr: 'var(--lifr-magenta)' };
+
+        for(let line of lines) {
+            if(!line.trim()) continue;
+            
+            // Extract Visibility
+            const visMatch = line.match(/(?:^|\s)(P6SM|M?\d\/\dSM|\d+\s\d\/\dSM|\d+SM)/);
+            if (visMatch) {
+                let vStr = visMatch[1].replace('SM','').replace('P','').replace('M','');
+                if (vStr === '6') currentVis = 10; 
+                else if (vStr.includes(' ')) {
+                    let parts = vStr.split(' ');
+                    let frac = parts[1].split('/');
+                    currentVis = parseInt(parts[0]) + (parseInt(frac[0]) / parseInt(frac[1]));
+                } else if (vStr.includes('/')) {
+                    let frac = vStr.split('/');
+                    currentVis = parseInt(frac[0]) / parseInt(frac[1]);
+                } else {
+                    currentVis = parseInt(vStr);
+                }
+            }
+
+            // Extract Ceiling
+            const cloudMatches = line.match(/(BKN|OVC|VV)(\d{3})/g);
+            if (line.includes('CLR') || line.includes('SKC') || line.includes('CAVOK')) {
+                currentCeil = 99999;
+            } else if (cloudMatches) {
+                currentCeil = 99999; 
+                cloudMatches.forEach(m => {
+                    let alt = parseInt(m.substring(3)) * 100;
+                    if (alt < currentCeil) currentCeil = alt;
+                });
+            }
+
+            let cat = determineFlightCategory(currentCeil, currentVis);
+            formattedLines.push(`<div style="color: ${catColors[cat]}; margin-bottom: 2px;">${line}</div>`);
+        }
+        return formattedLines.join('');
     }
 
     // --- 5. BACKGROUND TIMEZONE ENGINE ---
@@ -453,165 +525,4 @@
     function calculateCrosswind(windDir, windSpd, runwayHeading) {
         if (!windDir || !windSpd || windDir === 0 || windSpd === 0) return 0; 
         let angle = Math.abs(windDir - (runwayHeading * 10));
-        return Math.abs(Math.round(Math.sin(angle * (Math.PI / 180)) * windSpd));
-    }
-
-    function setBadge(elementId, isGo) {
-        const el = document.getElementById(elementId);
-        if(el) {
-            el.innerText = isGo ? "GO" : "NO-GO";
-            el.className = isGo ? "badge go" : "badge nogo";
-        }
-    }
-
-    // --- 6. VERIFIED CODETABS FETCH ENGINE ---
-    async function fetchAirportData(type, icao) {
-        const metarBox = document.getElementById(`metar-box-${type}`);
-        const tafBox = document.getElementById(`taf-box-${type}`);
-        const mapFrame = document.getElementById(`adsb-iframe-${type}`);
-        
-        if(!metarBox) return;
-
-        metarBox.innerText = `Fetching via CodeTabs for ${icao}...`;
-        metarBox.className = "metar-display"; // Reset colors
-        tafBox.innerText = 'Checking TAF...';
-
-        try {
-            // METAR Fetch
-            const metarTarget = `https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`;
-            const metarUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(metarTarget)}`;
-            
-            const res = await fetch(metarUrl);
-            if(!res.ok) throw new Error("Proxy connection failed.");
-            
-            const rawJsonText = await res.text();
-            let data;
-            try {
-                data = JSON.parse(rawJsonText);
-            } catch(e) {
-                throw new Error("Invalid response received from proxy.");
-            }
-            
-            if(!data || data.length === 0) throw new Error(`No recent METAR found for ${icao}.`);
-            const metar = data[0];
-
-            // Display Raw Text
-            metarBox.innerText = metar.rawOb || "Raw string missing.";
-
-            // Flight Category Parsing
-            let ceilVal = 99999;
-            if(metar.clouds) {
-                for(let layer of metar.clouds) {
-                    if(['BKN','OVC','VV'].includes(layer.cover)) {
-                        ceilVal = layer.base || 0; break;
-                    }
-                }
-            }
-            
-            let visVal = 10;
-            if(metar.visib) {
-                let vStr = String(metar.visib).replace('+','');
-                if(vStr.includes('/')) {
-                    let parts = vStr.split('/');
-                    if(parts.length===2) visVal = parseInt(parts[0])/parseInt(parts[1]);
-                } else {
-                    visVal = parseFloat(vStr);
-                }
-            }
-
-            // Apply ForeFlight Colors
-            const flightCategory = determineFlightCategory(ceilVal, visVal);
-            metarBox.classList.add(flightCategory);
-
-            // Update Maps & Timezone
-            if(metar.lat && metar.lon) {
-                if(mapFrame) mapFrame.src = `https://globe.adsbexchange.com/?lat=${metar.lat}&lon=${metar.lon}&zoom=11`;
-                updateAirportTimezone(metar.lat, metar.lon, type);
-                
-                // If Departure, update SkyVector on EnVironment Tab
-                if(type === 'dep') {
-                    const secFrame = document.getElementById('sectional-iframe');
-                    if(secFrame) secFrame.src = `https://skyvector.com/?ll=${metar.lat},${metar.lon}&chart=301&zoom=1`;
-                }
-            }
-
-            // TAF Fetch (Independent)
-            try {
-                const tafTarget = `https://aviationweather.gov/api/data/taf?ids=${icao}&format=raw`;
-                const tafUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(tafTarget)}`;
-                const tafRes = await fetch(tafUrl);
-                if(tafRes.ok) {
-                    const tafText = await tafRes.text();
-                    if(tafText.length > 5) tafBox.innerText = tafText;
-                    else tafBox.innerText = "No TAF reported.";
-                }
-            } catch(e) { tafBox.innerText = "TAF fetch failed."; }
-
-            // Departure Specific Minimums Logic
-            if(type === 'dep') {
-                const windSpd = metar.wspd || 0;
-                const windGust = metar.wgst || 0;
-                const maxReportedWind = Math.max(windSpd, windGust);
-                
-                document.getElementById('live-wind').innerText = `${windSpd} kt` + (windGust > 0 ? ` G${windGust}` : '');
-                let isWindGo = maxReportedWind <= appState.maxWind;
-                setBadge('badge-wind', isWindGo);
-
-                const windDir = metar.wdir || null;
-                let crosswind = calculateCrosswind(windDir, maxReportedWind, appState.rwy); 
-                document.getElementById('live-xwind').innerText = windDir ? `${crosswind} kt` : 'VRB';
-                let isXwindGo = crosswind <= appState.maxXwind;
-                setBadge('badge-xwind', isXwindGo);
-
-                document.getElementById('live-ceil').innerText = ceilVal === 99999 ? "Unlimited" : `${ceilVal} ft`;
-                let isCeilGo = ceilVal >= appState.minCeil;
-                setBadge('badge-ceil', isCeilGo);
-
-                // Master Decision
-                const masterGo = isWindGo && isXwindGo && isCeilGo;
-                const mText = document.getElementById('master-status-text');
-                const mBox = document.getElementById('master-decision-box');
-
-                if (masterGo) {
-                    mText.innerText = "GO";
-                    mBox.style.background = "linear-gradient(135deg, #14532d, #22c55e)";
-                    mBox.style.borderColor = "#16a34a";
-                } else {
-                    mText.innerText = "NO-GO";
-                    mBox.style.background = "linear-gradient(135deg, #7f1d1d, #ef4444)";
-                    mBox.style.borderColor = "#b91c1c";
-                }
-                
-                const timeEl = document.getElementById('metar-time');
-                if (timeEl) timeEl.innerText = `Report Time: ${metar.obsTime || 'Unknown'}`;
-            }
-
-        } catch (error) {
-            console.error(`${type} fetch error:`, error);
-            metarBox.innerText = `Error: ${error.message}`;
-            tafBox.innerText = '';
-            
-            if(type === 'dep') {
-                setBadge('badge-wind', false); setBadge('badge-ceil', false); setBadge('badge-xwind', false);
-                document.getElementById('master-status-text').innerText = "NO-GO";
-                document.getElementById('master-decision-box').style.background = "linear-gradient(135deg, #7f1d1d, #ef4444)";
-            }
-        }
-    }
-
-    // --- 7. STARTUP ---
-    updateStaticUI();
-    updateClocks();
-    
-    // Initial fetch
-    if(appState.depIcao) fetchAirportData('dep', appState.depIcao);
-    if(appState.arrIcao) fetchAirportData('arr', appState.arrIcao);
-    
-    // Auto Refresh
-    setInterval(() => {
-        if(appState.depIcao) fetchAirportData('dep', appState.depIcao);
-        if(appState.arrIcao) fetchAirportData('arr', appState.arrIcao);
-    }, 300000); 
-</script>
-</body>
-</html>
+        return
