@@ -98,8 +98,10 @@
         .tv-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; flex-grow: 1; min-height: 0; }
         .tv-col { display: flex; flex-direction: column; gap: 20px; min-height: 0; }
         .tv-card { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; min-height: 0; }
-        .tv-metar-box { flex-shrink: 0; }
-        .tv-taf-box { flex-grow: 1; overflow-y: auto; }
+        
+        /* Auto-Sizing Restraints for TV Mode */
+        .tv-metar-box { flex-shrink: 0; overflow: hidden; }
+        .tv-taf-box { flex-grow: 1; overflow: hidden; } /* Changed from auto to hidden to enforce scaling */
     </style>
 </head>
 <body>
@@ -213,11 +215,6 @@
                 <h2 class="h2-arr">ARR TRAFFIC (ADS-B)</h2>
                 <iframe id="adsb-iframe-arr" src="about:blank"></iframe>
             </div>
-        </div>
-        
-        <div class="card" style="margin-top: 20px;">
-            <h2>AVIATION WEATHER (GFA MAP)</h2>
-            <iframe class="gfa-frame" src="https://aviationweather.gov/gfa/" style="height: 500px;"></iframe>
         </div>
     </div>
 
@@ -352,11 +349,11 @@
         <div class="tv-col">
             <div class="tv-card tv-metar-box">
                 <h2 style="font-size:2rem; color:var(--accent-blue); margin-bottom: 10px;">METAR</h2>
-                <div id="tv-metar" class="metar-display" style="font-size:2rem; margin:0; line-height: 1.4;">Loading...</div>
+                <div id="tv-metar" class="metar-display" style="margin:0; line-height: 1.4;">Loading...</div>
             </div>
             <div class="tv-card tv-taf-box">
                 <h2 style="font-size:2rem; color:var(--accent-blue); margin-bottom: 10px;">TAF</h2>
-                <div id="tv-taf" class="metar-display" style="font-size:1.6rem; margin:0; line-height: 1.4; height: 100%;">Loading...</div>
+                <div id="tv-taf" class="metar-display" style="margin:0; line-height: 1.4;">Loading...</div>
             </div>
         </div>
         <div class="tv-card" style="padding:0; border: 4px solid var(--border-color); overflow: hidden;">
@@ -378,6 +375,28 @@
     function resetChecks(divId) {
         document.querySelectorAll(`#${divId} input[type="checkbox"]`).forEach(cb => cb.checked = false);
     }
+
+    // --- Dynamic Text Sizer for TV Mode ---
+    function autoFitText(elementId, defaultSizeRem) {
+        const el = document.getElementById(elementId);
+        if(!el) return;
+        const parent = el.parentElement;
+        let currentSize = defaultSizeRem;
+        el.style.fontSize = currentSize + 'rem';
+        
+        while (parent.scrollHeight > parent.clientHeight && currentSize > 0.6) {
+            currentSize -= 0.05;
+            el.style.fontSize = currentSize + 'rem';
+        }
+    }
+
+    // Recalculate on window resize
+    window.addEventListener('resize', () => {
+        if (isTvMode) {
+            autoFitText('tv-metar', 2.0);
+            autoFitText('tv-taf', 1.6);
+        }
+    });
 
     // --- 1. STATE MANAGEMENT ---
     let appState = JSON.parse(localStorage.getItem('aeroNerdV10')) || {
@@ -654,6 +673,14 @@
                 }
             } catch(e) { tafBox.innerText = "TAF fetch failed."; }
 
+            // TV Mode Auto-Resize
+            if (type === 'tv') {
+                setTimeout(() => {
+                    autoFitText('tv-metar', 2.0);
+                    autoFitText('tv-taf', 1.6);
+                }, 50);
+            }
+
             // Departure Specific Minimums Logic
             if(type === 'dep') {
                 const windSpd = metar.wspd || 0;
@@ -753,7 +780,7 @@
     if(appState.depIcao) fetchAirportData('dep', appState.depIcao);
     if(appState.arrIcao) fetchAirportData('arr', appState.arrIcao);
     
-    // Accelerated Auto Refresh (Every 60 Seconds)
+    // Auto Refresh (Every 60 Seconds)
     setInterval(() => {
         if(isTvMode) {
             const tvIcao = document.getElementById('tv-icao-title').innerText;
