@@ -3,125 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pilot Preflight Dashboard</title>
+    <title>AeroNerd Preflight</title>
     <style>
         :root {
-            --bg-color: #0f1722;
-            --card-bg: #1a2737;
-            --text-main: #e2e8f0;
-            --accent-blue: #38bdf8;
-            --accent-orange: #f97316;
-            --green-pass: #22c55e;
-            --red-fail: #ef4444;
+            --bg-color: #0b111a; --card-bg: #15202b; --text-main: #e2e8f0;
+            --accent-blue: #38bdf8; --accent-orange: #f97316;
+            --vfr-green: #22c55e; --mvfr-blue: #3b82f6; --ifr-red: #ef4444; --lifr-magenta: #d946ef;
             --border-color: #334155;
         }
 
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; }
 
-        /* --- Header: Search & Clocks --- */
-        .header-container { display: flex; justify-content: center; align-items: center; gap: 30px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
+        /* --- Header & Top Bar --- */
+        .title-bar { text-align: center; position: relative; margin-bottom: 20px; }
+        .title-bar h1 { margin: 0; color: var(--accent-blue); font-size: 2.5rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 900;}
+        .tv-mode-btn { position: absolute; top: 0; right: 0; background: #334155; color: white; border: 1px solid #475569; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        .tv-mode-btn:hover { background: #475569; }
+
+        .header-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
         
-        .clock-box { display: flex; flex-direction: column; align-items: center; background: #0f172a; padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color); min-width: 120px; }
-        .clock-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }
-        .clock-time { font-size: 1.5rem; font-family: monospace; font-weight: bold; color: var(--accent-blue); }
-        .clock-zulu { color: #facc15; }
+        .clock-box { display: flex; flex-direction: column; align-items: center; background: #0f172a; padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color); min-width: 200px; }
+        .clock-label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; text-align: center;}
+        .clock-time { font-size: 1.1rem; font-family: monospace; font-weight: bold; text-align: center;}
+        
+        #clock-dep { color: var(--accent-blue); }
+        #clock-arr { color: var(--accent-orange); }
+        #clock-zulu { color: #facc15; }
 
-        /* Updated Dual Search Box */
-        .search-box { display: flex; flex-direction: column; gap: 8px; background: #1e293b; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
-        .search-row { display: flex; gap: 10px; align-items: center; }
-        .search-label { font-size: 0.75rem; color: #94a3b8; font-weight: bold; width: 35px; text-align: right; }
-        .search-box input { background-color: #0f172a; border: 2px solid var(--accent-blue); color: white; padding: 10px; font-size: 1.2rem; border-radius: 8px; text-transform: uppercase; width: 120px; text-align: center; outline: none; font-weight: bold; }
-        .search-box button { background-color: var(--accent-blue); color: #000; border: none; padding: 10px; font-size: 1rem; font-weight: 900; border-radius: 8px; cursor: pointer; text-transform: uppercase; transition: background 0.2s; margin-top: 5px;}
-        .search-box button:hover { background-color: #7dd3fc; }
+        .search-box { display: flex; flex-direction: column; gap: 5px; background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);}
+        .search-row { display: flex; gap: 5px; align-items: center;}
+        .search-label { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; width: 40px; text-align: right; color: #94a3b8;}
+        .search-input { background-color: #0f172a; border: 1px solid var(--border-color); color: white; padding: 8px; font-size: 1.2rem; border-radius: 4px; text-transform: uppercase; width: 100px; text-align: center; outline: none; font-weight: bold; }
+        .search-btn { background-color: var(--accent-blue); color: #000; border: none; padding: 10px 20px; font-size: 1rem; font-weight: 900; border-radius: 4px; cursor: pointer; text-transform: uppercase; height: 100%; margin-top: 5px;}
+        .search-btn:hover { background-color: #7dd3fc; }
 
-        h2 { font-size: 0.9rem; color: var(--accent-blue); margin-top: 0; margin-bottom: 15px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;}
+        /* --- Tab System --- */
+        .tabs-nav { display: flex; justify-content: center; gap: 5px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { background: #1e293b; color: #94a3b8; border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: all 0.2s; font-size: 0.9rem;}
+        .tab-btn.active { background: var(--accent-blue); color: #000; border-color: var(--accent-blue); }
+        .tab-btn:hover:not(.active) { background: #334155; color: white;}
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- Layout & Cards --- */
+        .dashboard-container { max-width: 1400px; margin: 0 auto; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;}
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;}
+        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative;}
+        h2 { font-size: 1rem; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;}
+        .h2-dep { color: var(--accent-blue); }
         .h2-arr { color: var(--accent-orange); }
 
-        .dashboard-container { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; }
-        .top-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; } /* Added for side-by-side layout */
+        /* --- Overview Components --- */
+        .master-decision { display: flex; justify-content: center; align-items: center; background: #334155; border: 2px solid #475569; border-radius: 8px; color: #94a3b8; text-align: center; height: 100px; font-size: 2.5rem; font-weight: 900; transition: all 0.3s ease; }
+        .master-decision.go { background: linear-gradient(135deg, #14532d, #22c55e); border-color: #16a34a; color: white; }
+        .master-decision.nogo { background: linear-gradient(135deg, #7f1d1d, #ef4444); border-color: #b91c1c; color: white; }
         
-        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative; }
-        
-        /* Personal Minimums */
+        .com-btn { background-color: #0f172a; border: 1px solid #475569; color: white; padding: 12px; border-radius: 6px; text-align: center; font-size: 1rem; cursor: pointer; text-decoration: none; font-weight: bold; display: block; transition: all 0.2s ease; margin-bottom: 10px;}
+        .com-btn:hover { background-color: #1e293b; }
+
+        /* Dynamic Weather Box (ForeFlight Colors) */
+        .metar-display { font-family: monospace; padding: 15px; border-radius: 4px; font-size: 1rem; white-space: pre-wrap; line-height: 1.5; background-color: #0f172a; color: #94a3b8; border-left: 5px solid #475569; transition: all 0.3s ease; margin-bottom: 10px;}
+        .vfr { border-left-color: var(--vfr-green); color: var(--vfr-green); }
+        .mvfr { border-left-color: var(--mvfr-blue); color: var(--mvfr-blue); }
+        .ifr { border-left-color: var(--ifr-red); color: var(--ifr-red); }
+        .lifr { border-left-color: var(--lifr-magenta); color: var(--lifr-magenta); }
+
+        iframe { width: 100%; height: 400px; border: none; border-radius: 4px; background: #000;}
+
+        /* Min Setup Elements */
+        .min-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .min-data span { display: block; font-size: 0.8rem; color: #94a3b8; }
+        .badge { padding: 5px 15px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; background: #334155; color: #94a3b8;}
+        .badge.go { background-color: var(--green-pass); color: white; }
+        .badge.nogo { background-color: var(--red-fail); color: white; }
         .edit-btn { position: absolute; top: 10px; right: 15px; background: var(--accent-blue); color: #000; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
         .edit-btn:hover { background: #7dd3fc; }
         .hidden { display: none !important; }
         .edit-form label { display: block; margin-top: 10px; font-size: 0.85rem; color: #94a3b8; }
         .edit-form input { width: 100%; padding: 8px; margin-top: 5px; background: #0f172a; border: 1px solid var(--border-color); color: white; border-radius: 4px; box-sizing: border-box;}
         .save-btn { width: 100%; background: var(--green-pass); color: white; border: none; padding: 10px; margin-top: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        
-        .min-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .min-row:last-child { border-bottom: none; }
-        .min-data span { display: block; font-size: 0.8rem; color: #94a3b8; }
-        .badge { padding: 5px 15px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; }
-        .badge.go { background-color: var(--green-pass); color: white; }
-        .badge.nogo { background-color: var(--red-fail); color: white; }
 
-        /* Master GO/NO-GO */
-        .master-decision { display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #7f1d1d, #ef4444); border: 2px solid #b91c1c; border-radius: 8px; color: white; text-align: center; height: 100%;}
-        .master-decision h2 { color: white; margin-bottom: 5px; font-size: 1rem; border: none; }
-        .master-decision .status { font-size: 3.5rem; font-weight: 900; line-height: 1; margin: 0; }
-
-        /* COM Stack (LiveATC) */
-        .com-stack { display: flex; flex-direction: column; gap: 10px; height: 100%; justify-content: center;}
-        .com-btn { background-color: #0f172a; border: 2px solid var(--accent-blue); color: white; padding: 12px; border-radius: 8px; text-align: center; font-size: 1rem; cursor: pointer; text-decoration: none; font-weight: bold; display: block; transition: all 0.2s ease;}
-        .com-btn:hover { background-color: var(--accent-blue); color: black;}
-
-        /* Weather Text */
-        .metar-display { font-family: 'Courier New', Courier, monospace; color: #4ade80; background-color: #0f172a; padding: 15px; border-radius: 4px; font-size: 1rem; white-space: pre-wrap; line-height: 1.5; min-height: 60px; overflow-y: auto;}
-
-        /* Iframes */
-        .radar-frame { width: 100%; height: 400px; border: none; border-radius: 4px; }
-        .gfa-frame { width: 100%; height: 500px; border: none; border-radius: 4px; background: #fff; }
+        /* --- Checklists --- */
+        .checklist-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 8px; background: #0f172a; border-radius: 6px; border: 1px solid #1e293b;}
+        .checklist-item input[type="checkbox"] { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--green-pass); cursor: pointer;}
+        .checklist-text { font-size: 0.95rem; color: #e2e8f0; line-height: 1.4;}
+        .checklist-subtext { display: block; font-size: 0.8rem; color: #94a3b8; margin-top: 4px;}
+        .reset-btn { background: #334155; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; float: right; margin-top: -35px;}
     </style>
 </head>
 <body>
 
+<div class="title-bar">
+    <h1>AeroNerd</h1>
+    <button class="tv-mode-btn" onclick="alert('TV MODE is currently INOP.')">📺 TV MODE</button>
+</div>
+
 <div class="header-container">
     <div class="clock-box">
-        <span class="clock-label">Local Time</span>
-        <span class="clock-time" id="clock-local">00:00:00</span>
+        <span class="clock-label" id="dep-clock-title">DEP LOCAL TIME</span>
+        <span class="clock-time" id="clock-dep">--</span>
     </div>
 
     <div class="search-box">
         <div class="search-row">
             <span class="search-label">DEP</span>
-            <input type="text" id="input-dep" placeholder="KPVU" maxlength="4" onkeypress="handleEnter(event)">
+            <input type="text" id="input-dep" class="search-input" placeholder="KPVU" maxlength="4" onkeypress="handleEnter(event)">
         </div>
         <div class="search-row">
             <span class="search-label">ARR</span>
-            <input type="text" id="input-arr" placeholder="KSLC" maxlength="4" onkeypress="handleEnter(event)">
+            <input type="text" id="input-arr" class="search-input" placeholder="KSLC" maxlength="4" onkeypress="handleEnter(event)">
         </div>
-        <button onclick="searchNewAirport()">Search Route</button>
+        <button class="search-btn" onclick="executeSearch()">SEARCH ROUTE</button>
     </div>
 
     <div class="clock-box">
-        <span class="clock-label">Zulu Time (UTC)</span>
-        <span class="clock-time clock-zulu" id="clock-zulu">00:00:00 Z</span>
+        <span class="clock-label" id="arr-clock-title">ARR LOCAL TIME</span>
+        <span class="clock-time" id="clock-arr">--</span>
+    </div>
+
+    <div class="clock-box">
+        <span class="clock-label">ZULU TIME (UTC)</span>
+        <span class="clock-time clock-zulu" id="clock-zulu">--</span>
     </div>
 </div>
 
-<div class="dashboard-container">
+<div class="tabs-nav">
+    <button class="tab-btn active" onclick="openTab('tab-overview', this)">1. Overview</button>
+    <button class="tab-btn" onclick="openTab('tab-pilot', this)">2. Pilot</button>
+    <button class="tab-btn" onclick="openTab('tab-aircraft', this)">3. Aircraft</button>
+    <button class="tab-btn" onclick="openTab('tab-env', this)">4. enVironment</button>
+    <button class="tab-btn" onclick="openTab('tab-external', this)">5. External</button>
+    <button class="tab-btn" onclick="openTab('tab-91103', this)">6. 91.103</button>
+</div>
+
+<div id="tab-overview" class="tab-content active">
     
-    <div class="top-row">
+    <div class="grid-3">
         <div class="card">
-            <h2>Personal Minimums <span id="display-dep-icao" style="color:white; margin-left:10px;">KPVU</span></h2>
+            <h2>DEPARTURE MINS <span id="display-dep-icao" style="color:white; margin-left:10px;">--</span></h2>
             <button class="edit-btn" onclick="toggleEdit()">EDIT MINS</button>
         
             <div id="display-mode">
-                <div class="min-row">
-                    <div class="min-data">Wind: <span id="live-wind">--</span> <span style="font-size:0.65rem;">(MAX: <span id="set-wind">20</span> kt)</span></div>
-                    <div id="badge-wind" class="badge">--</div>
-                </div>
-                <div class="min-row">
-                    <div class="min-data">Ceiling: <span id="live-ceil">--</span> <span style="font-size:0.65rem;">(MIN: <span id="set-ceil">1500</span> ft)</span></div>
-                    <div id="badge-ceil" class="badge">--</div>
-                </div>
-                <div class="min-row">
-                    <div class="min-data">Crosswind: <span id="live-xwind">--</span> <span style="font-size:0.65rem;">(MAX: <span id="set-xwind">10</span> kt | Rwy <span id="display-rwy">04</span>)</span></div>
-                    <div id="badge-xwind" class="badge">--</div>
-                </div>
+                <div class="min-row"><div class="min-data">Wind: <span id="live-wind">--</span> <span style="font-size:0.65rem;">(MAX: <span id="set-wind">20</span> kt)</span></div><div id="badge-wind" class="badge">--</div></div>
+                <div class="min-row"><div class="min-data">Ceiling: <span id="live-ceil">--</span> <span style="font-size:0.65rem;">(MIN: <span id="set-ceil">1500</span> ft)</span></div><div id="badge-ceil" class="badge">--</div></div>
+                <div class="min-row"><div class="min-data">Crosswind: <span id="live-xwind">--</span> <span style="font-size:0.65rem;">(MAX: <span id="set-xwind">10</span> kt | Rwy <span id="display-rwy">04</span>)</span></div><div id="badge-xwind" class="badge">--</div></div>
                 <div style="margin-top: 10px; font-size: 0.75rem; color: #aaa;" id="metar-time"></div>
             </div>
         
@@ -134,141 +161,293 @@
             </div>
         </div>
 
-        <div class="master-decision" id="master-decision-box">
-            <h2 style="border:none;">MASTER GO / NO-GO</h2>
-            <p class="status" id="master-status-text">NO-GO</p>
+        <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+            <div class="master-decision" id="master-decision-box">
+                <p class="status" id="master-status-text" style="margin:0;">--</p>
+            </div>
+            <div style="text-align:center; font-size:0.75rem; color:#94a3b8; margin-top:10px;">
+                Evaluates Departure Winds and Ceilings
+            </div>
         </div>
 
-        <div class="card">
-            <h2>COMMUNICATIONS (LiveATC)</h2>
-            <div class="com-stack">
-                <a id="atis-link-dep" href="https://www.liveatc.net/search/?icao=KPVU" target="_blank" class="com-btn">
-                    DEP: <span id="liveatc-btn-dep">KPVU</span> ➔
-                </a>
-                <a id="atis-link-arr" href="https://www.liveatc.net/search/?icao=KSLC" target="_blank" class="com-btn" style="border-color: var(--accent-orange);">
-                    ARR: <span id="liveatc-btn-arr">KSLC</span> ➔
-                </a>
-            </div>
+        <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+            <h2 style="border:none;">LiveATC Audio</h2>
+            <a id="atis-link-dep" href="#" target="_blank" class="com-btn" style="border-color:var(--accent-blue);">
+                DEP: <span id="liveatc-btn-dep">--</span> ➔
+            </a>
+            <a id="atis-link-arr" href="#" target="_blank" class="com-btn" style="border-color:var(--accent-orange); display:none;">
+                ARR: <span id="liveatc-btn-arr">--</span> ➔
+            </a>
         </div>
     </div>
 
     <div class="grid-2">
         <div class="card">
-            <h2>DEP WEATHER (METAR/TAF)</h2>
-            <div id="metar-box-dep" class="metar-display">Loading...</div>
-            <div id="taf-box-dep" class="metar-display" style="margin-top: 10px; color: #facc15;"></div>
+            <h2 class="h2-dep">DEP WEATHER (METAR/TAF)</h2>
+            <div id="metar-box-dep" class="metar-display">Awaiting search...</div>
+            <div id="taf-box-dep" class="metar-display" style="color: #facc15; font-size: 0.85rem;"></div>
         </div>
         <div class="card">
             <h2 class="h2-arr">ARR WEATHER (METAR/TAF)</h2>
-            <div id="metar-box-arr" class="metar-display">Loading...</div>
-            <div id="taf-box-arr" class="metar-display" style="margin-top: 10px; color: #facc15;"></div>
+            <div id="metar-box-arr" class="metar-display">Awaiting search...</div>
+            <div id="taf-box-arr" class="metar-display" style="color: #facc15; font-size: 0.85rem;"></div>
         </div>
     </div>
 
     <div class="grid-2">
         <div class="card">
-            <h2>DEP TRAFFIC (ADS-B)</h2>
-            <iframe id="adsb-iframe-dep" class="radar-frame" src="about:blank"></iframe>
+            <h2 class="h2-dep">DEP TRAFFIC (ADS-B)</h2>
+            <iframe id="adsb-iframe-dep" src="about:blank"></iframe>
         </div>
         <div class="card">
             <h2 class="h2-arr">ARR TRAFFIC (ADS-B)</h2>
-            <iframe id="adsb-iframe-arr" class="radar-frame" src="about:blank"></iframe>
+            <iframe id="adsb-iframe-arr" src="about:blank"></iframe>
         </div>
     </div>
-
-    <div class="card" style="margin-top: 20px;">
-        <h2>AVIATION WEATHER (GFA MAP)</h2>
-        <iframe class="gfa-frame" src="https://aviationweather.gov/gfa/"></iframe>
-    </div>
-
 </div>
 
-<script>
-    // --- 1. CLOCK LOGIC ---
+<div id="tab-pilot" class="tab-content">
+    <div class="grid-2">
+        <div class="card">
+            <h2>IMSAFE & Legal <button class="reset-btn" onclick="resetChecks('pilot-checks')">RESET</button></h2>
+            <div id="pilot-checks">
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">I - Illness<span class="checklist-subtext">Am I feeling well today?</span></div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">M - Medication<span class="checklist-subtext">Taking any prescription or OTC drugs?</span></div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">S - Stress<span class="checklist-subtext">Psychological pressures from work/life?</span></div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Alcohol<span class="checklist-subtext">8 hours bottle to throttle? No lingering effects?</span></div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">F - Fatigue<span class="checklist-subtext">Adequate sleep? Physical exhaustion?</span></div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">E - Emotion / Eating<span class="checklist-subtext">Emotionally stable? Properly nourished?</span></div></label>
+                <hr style="border-color:#334155; margin:15px 0;">
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Current Flight Review (24 Cal. Months)</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Current Medical Certificate</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Government Photo ID & Pilot Certificate</div></label>
+            </div>
+        </div>
+        <div class="card">
+            <h2>Hazardous Attitudes <button class="reset-btn" onclick="resetChecks('attitude-checks')">RESET</button></h2>
+            <div id="attitude-checks">
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Anti-Authority <span class="checklist-subtext">Antidote: Follow the rules. They are usually right.</span></div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Impulsivity <span class="checklist-subtext">Antidote: Not so fast. Think first.</span></div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Invulnerability <span class="checklist-subtext">Antidote: It could happen to me.</span></div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Macho <span class="checklist-subtext">Antidote: Taking chances is foolish.</span></div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Resignation <span class="checklist-subtext">Antidote: I am not helpless. I can make a difference.</span></div></label>
+                <hr style="border-color:#334155; margin:15px 0;">
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Checked Operational Pitfalls<span class="checklist-subtext">Peer pressure, get-there-itis, scud running, VFR into IMC.</span></div></label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="tab-aircraft" class="tab-content">
+    <div class="grid-2">
+        <div class="card">
+            <h2>Aircraft Docs & Currency <button class="reset-btn" onclick="resetChecks('ac-docs')">RESET</button></h2>
+            <div id="ac-docs">
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Recency of Experience<span class="checklist-subtext">3 takeoffs/landings in 90 days.</span></div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Performance Calculations complete</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Weight & Balance computed</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Fuel Requirements met (FAR 91.151/167)</div></label>
+                <hr style="border-color:#334155; margin:15px 0;">
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Airworthiness Certificate</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">R - Registration Certificate</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">O - Operating Limitations (POH)</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">W - Weight and Balance</div></label>
+            </div>
+        </div>
+        <div class="card">
+            <h2>Inspections & Equipment <button class="reset-btn" onclick="resetChecks('ac-insp')">RESET</button></h2>
+            <div id="ac-insp">
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Annual Inspection</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">V - VOR Check (30 days, IFR)</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">1 - 100 Hour Inspection (If for hire)</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Altimeter / Pitot Static (24 months)</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">T - Transponder (24 months)</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">E - ELT (12 months)</div></label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="tab-env" class="tab-content">
+    <div class="grid-2">
+        <div class="card">
+            <h2>Flight Plan & Factors <button class="reset-btn" onclick="resetChecks('env-checks')">RESET</button></h2>
+            <div id="env-checks">
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Flight Type selected (VFR / IFR)</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">NOTAMs Checked</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">RAIM / WAAS Outages Checked</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">ATC Delays Checked</div></label>
+                <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Chart Supplement Reviewed</div></label>
+            </div>
+        </div>
+        <div class="card">
+            <h2 class="h2-dep">Departure Sectional Chart</h2>
+            <iframe id="sectional-iframe" src="about:blank" style="height: 300px;"></iframe>
+        </div>
+    </div>
+</div>
+
+<div id="tab-external" class="tab-content">
+    <div class="card">
+        <h2>External Pressures <button class="reset-btn" onclick="resetChecks('ext-checks')">RESET</button></h2>
+        <div id="ext-checks">
+            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Passengers briefed (Seatbelts, Air vents, Fire ext, Exit)</div></label>
+            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Expectation Management (Divert plan discussed)</div></label>
+            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">No 'Get-There-Itis'</div></label>
+            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">Flight Bag packed (iPad charged)</div></label>
+        </div>
+    </div>
+</div>
+
+<div id="tab-91103" class="tab-content">
+    <div class="card">
+        <h2>FAR 91.103 (NWKRAFT) <button class="reset-btn" onclick="resetChecks('nwkraft-checks')">RESET</button></h2>
+        <div id="nwkraft-checks">
+            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">N - NOTAMs checked</div></label>
+            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">W - Weather reports and forecasts reviewed</div></label>
+            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">K - Known ATC traffic delays</div></label>
+            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">R - Runway lengths of intended use</div></label>
+            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">A - Alternatives available</div></label>
+            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">F - Fuel requirements computed</div></label>
+            <label class="checklist-item"><input type="checkbox"><div class="checklist-text">T - Takeoff and landing distance data</div></label>
+        </div>
+    </div>
+</div>
+
+</div> <script>
+    // --- 0. TAB SYSTEM ---
+    function openTab(tabId, btnElement) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btnElement.classList.add('active');
+    }
+    function resetChecks(divId) {
+        document.querySelectorAll(`#${divId} input[type="checkbox"]`).forEach(cb => cb.checked = false);
+    }
+
+    // --- 1. STATE MANAGEMENT ---
+    let appState = JSON.parse(localStorage.getItem('aeroNerdV5')) || {
+        depIcao: 'KPVU', arrIcao: 'KSLC',
+        rwy: 4, maxXwind: 10, maxWind: 20, minCeil: 1500
+    };
+    
+    let depTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    let arrTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // --- 2. CLOCK ENGINE (WITH DATES) ---
     function updateClocks() {
-        const now = new Date();
-        const localTimeStr = now.toLocaleTimeString('en-US', { hour12: false });
-        document.getElementById('clock-local').innerText = localTimeStr;
-        
-        const zuluHours = String(now.getUTCHours()).padStart(2, '0');
-        const zuluMins = String(now.getUTCMinutes()).padStart(2, '0');
-        const zuluSecs = String(now.getUTCSeconds()).padStart(2, '0');
-        document.getElementById('clock-zulu').innerText = `${zuluHours}:${zuluMins}:${zuluSecs} Z`;
+        try {
+            const now = new Date();
+            
+            const depEl = document.getElementById('clock-dep');
+            if(depEl) depEl.innerText = now.toLocaleString('en-US', { timeZone: depTZ, dateStyle: 'short', timeStyle: 'short', hour12: false });
+            
+            const arrEl = document.getElementById('clock-arr');
+            if(arrEl) arrEl.innerText = now.toLocaleString('en-US', { timeZone: arrTZ, dateStyle: 'short', timeStyle: 'short', hour12: false });
+            
+            const zuluEl = document.getElementById('clock-zulu');
+            if(zuluEl) zuluEl.innerText = now.toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'short', timeStyle: 'short', hour12: false }) + ' Z';
+            
+        } catch(e) { console.error("Clock error"); }
     }
     setInterval(updateClocks, 1000);
-    updateClocks();
 
-    // --- 2. SETTINGS & LOGIC ---
-    let userSettings = JSON.parse(localStorage.getItem('pilotSetupV4')) || { 
-        depIcao: 'KPVU', 
-        arrIcao: 'KSLC',
-        rwy: 4, 
-        maxWind: 20, 
-        minCeil: 1500, 
-        maxXwind: 10
-    };
+    // --- 3. UI CONTROLS ---
+    function handleEnter(e) { if (e.key === 'Enter') executeSearch(); }
 
-    function handleEnter(e) { if (e.key === 'Enter') searchNewAirport(); }
-
-    function searchNewAirport() {
-        let dep = document.getElementById('input-dep').value.trim().toUpperCase();
-        let arr = document.getElementById('input-arr').value.trim().toUpperCase();
+    function executeSearch() {
+        const depInput = document.getElementById('input-dep').value.trim().toUpperCase();
+        const arrInput = document.getElementById('input-arr').value.trim().toUpperCase();
         
-        if (dep.length >= 3) userSettings.depIcao = dep;
-        if (arr.length >= 3) userSettings.arrIcao = arr;
+        if (depInput.length >= 3) appState.depIcao = depInput;
+        if (arrInput.length >= 3) appState.arrIcao = arrInput;
+        else appState.arrIcao = ""; // Clear if empty
         
-        localStorage.setItem('pilotSetupV4', JSON.stringify(userSettings));
-        updateUI();
-        checkWeather(); 
+        localStorage.setItem('aeroNerdV5', JSON.stringify(appState));
+        updateStaticUI();
+        
+        // Reset and trigger fetches
+        document.getElementById('master-status-text').innerText = "--";
+        document.getElementById('master-decision-box').style.background = "#334155";
+        document.getElementById('master-decision-box').style.borderColor = "#475569";
+        
+        fetchAirportData('dep', appState.depIcao);
+        if(appState.arrIcao) fetchAirportData('arr', appState.arrIcao);
     }
 
     function toggleEdit() {
         document.getElementById('display-mode').classList.add('hidden');
         document.querySelector('.edit-btn').classList.add('hidden');
         document.getElementById('edit-mode').classList.remove('hidden');
-        document.getElementById('input-rwy').value = userSettings.rwy;
-        document.getElementById('input-wind').value = userSettings.maxWind;
-        document.getElementById('input-ceil').value = userSettings.minCeil;
-        document.getElementById('input-xwind').value = userSettings.maxXwind;
+        document.getElementById('input-rwy').value = appState.rwy;
+        document.getElementById('input-wind').value = appState.maxWind;
+        document.getElementById('input-ceil').value = appState.minCeil;
+        document.getElementById('input-xwind').value = appState.maxXwind;
     }
 
     function saveSettings() {
-        userSettings.rwy = parseInt(document.getElementById('input-rwy').value) || 4;
-        userSettings.maxWind = parseInt(document.getElementById('input-wind').value) || 20;
-        userSettings.minCeil = parseInt(document.getElementById('input-ceil').value) || 1500;
-        userSettings.maxXwind = parseInt(document.getElementById('input-xwind').value) || 10;
-        localStorage.setItem('pilotSetupV4', JSON.stringify(userSettings));
+        appState.rwy = parseInt(document.getElementById('input-rwy').value) || 4;
+        appState.maxXwind = parseInt(document.getElementById('input-xwind').value) || 10;
+        appState.maxWind = parseInt(document.getElementById('input-wind').value) || 20;
+        appState.minCeil = parseInt(document.getElementById('input-ceil').value) || 1500;
+        localStorage.setItem('aeroNerdV5', JSON.stringify(appState));
         
         document.getElementById('edit-mode').classList.add('hidden');
         document.getElementById('display-mode').classList.remove('hidden');
         document.querySelector('.edit-btn').classList.remove('hidden');
-        updateUI(); 
-        checkWeather();
+        updateStaticUI(); 
+        
+        // Re-run dep calculation
+        if(appState.depIcao) fetchAirportData('dep', appState.depIcao);
     }
 
-    function updateUI() {
-        // Inputs
-        document.getElementById('input-dep').value = userSettings.depIcao;
-        document.getElementById('input-arr').value = userSettings.arrIcao;
+    function updateStaticUI() {
+        document.getElementById('input-dep').value = appState.depIcao;
+        document.getElementById('input-arr').value = appState.arrIcao;
         
-        // Mins Box
-        document.getElementById('display-dep-icao').innerText = userSettings.depIcao;
-        document.getElementById('display-rwy').innerText = userSettings.rwy < 10 ? '0'+userSettings.rwy : userSettings.rwy;
-        document.getElementById('set-wind').innerText = userSettings.maxWind;
-        document.getElementById('set-ceil').innerText = userSettings.minCeil;
-        document.getElementById('set-xwind').innerText = userSettings.maxXwind;
+        document.getElementById('display-dep-icao').innerText = appState.depIcao;
+        document.getElementById('display-rwy').innerText = appState.rwy < 10 ? '0'+appState.rwy : appState.rwy;
+        document.getElementById('set-wind').innerText = appState.maxWind;
+        document.getElementById('set-ceil').innerText = appState.minCeil;
+        document.getElementById('set-xwind').innerText = appState.maxXwind;
+
+        document.getElementById('dep-clock-title').innerText = `${appState.depIcao} LOCAL`;
+        document.getElementById('arr-clock-title').innerText = `${appState.arrIcao || 'ARR'} LOCAL`;
+
+        document.getElementById('liveatc-btn-dep').innerText = appState.depIcao;
+        document.getElementById('atis-link-dep').href = `https://www.liveatc.net/search/?icao=${appState.depIcao}`;
         
-        // LiveATC
-        document.getElementById('liveatc-btn-dep').innerText = userSettings.depIcao;
-        document.getElementById('atis-link-dep').href = `https://www.liveatc.net/search/?icao=${userSettings.depIcao}`;
-        
-        if (userSettings.arrIcao) {
-            document.getElementById('liveatc-btn-arr').innerText = userSettings.arrIcao;
-            document.getElementById('atis-link-arr').href = `https://www.liveatc.net/search/?icao=${userSettings.arrIcao}`;
+        if(appState.arrIcao) {
+            document.getElementById('liveatc-btn-arr').innerText = appState.arrIcao;
+            document.getElementById('atis-link-arr').href = `https://www.liveatc.net/search/?icao=${appState.arrIcao}`;
             document.getElementById('atis-link-arr').style.display = "block";
         } else {
             document.getElementById('atis-link-arr').style.display = "none";
         }
+    }
+
+    // --- 4. FLIGHT CATEGORY LOGIC ---
+    function determineFlightCategory(ceiling, visibility) {
+        if (ceiling < 500 || visibility < 1) return 'lifr';
+        if (ceiling < 1000 || visibility < 3) return 'ifr';
+        if (ceiling <= 3000 || visibility <= 5) return 'mvfr';
+        return 'vfr';
+    }
+
+    // --- 5. BACKGROUND TIMEZONE ENGINE ---
+    async function updateAirportTimezone(lat, lon, type) {
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`);
+            if(res.ok) {
+                const data = await res.json();
+                if(data.timezone) {
+                    if(type === 'dep') depTZ = data.timezone;
+                    if(type === 'arr') arrTZ = data.timezone;
+                    updateClocks();
+                }
+            }
+        } catch(e) {} 
     }
 
     function calculateCrosswind(windDir, windSpd, runwayHeading) {
@@ -279,112 +458,116 @@
 
     function setBadge(elementId, isGo) {
         const el = document.getElementById(elementId);
-        el.innerText = isGo ? "GO" : "NO-GO";
-        el.className = isGo ? "badge go" : "badge nogo";
-    }
-
-    // --- 3. ROBUST FETCH ENGINE (Solves the Browser Block Issue) ---
-    async function robustFetchJSON(url) {
-        // Tries direct, then falls back to public proxies if blocked
-        const proxies = [
-            url, 
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-        ];
-        
-        for (let target of proxies) {
-            try {
-                let res = await fetch(target);
-                if (res.ok) {
-                    let text = await res.text();
-                    try { 
-                        return JSON.parse(text); 
-                    } catch(e) { 
-                        // Some proxies wrap the text in an object
-                        let obj = JSON.parse(text);
-                        if(obj.contents) return JSON.parse(obj.contents);
-                    }
-                }
-            } catch(e) { /* Silent fail, try next proxy */ }
+        if(el) {
+            el.innerText = isGo ? "GO" : "NO-GO";
+            el.className = isGo ? "badge go" : "badge nogo";
         }
-        throw new Error("Connection blocked by browser shields.");
     }
 
-    async function robustFetchText(url) {
-        const proxies = [
-            url, 
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-        ];
-        for (let target of proxies) {
-            try {
-                let res = await fetch(target);
-                if (res.ok) return await res.text();
-            } catch(e) {}
-        }
-        return "";
-    }
-
-    // --- 4. WEATHER PROCESSING ---
-    async function fetchAirportData(icao, type) {
+    // --- 6. VERIFIED CODETABS FETCH ENGINE ---
+    async function fetchAirportData(type, icao) {
         const metarBox = document.getElementById(`metar-box-${type}`);
         const tafBox = document.getElementById(`taf-box-${type}`);
+        const mapFrame = document.getElementById(`adsb-iframe-${type}`);
         
-        metarBox.innerText = `Fetching secure data for ${icao}...`;
-        tafBox.innerText = '';
-        
+        if(!metarBox) return;
+
+        metarBox.innerText = `Fetching via CodeTabs for ${icao}...`;
+        metarBox.className = "metar-display"; // Reset colors
+        tafBox.innerText = 'Checking TAF...';
+
         try {
-            const metarUrl = `https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`;
-            const data = await robustFetchJSON(metarUrl);
+            // METAR Fetch
+            const metarTarget = `https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`;
+            const metarUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(metarTarget)}`;
             
-            if (!data || data.length === 0) throw new Error("No reports found for this airport.");
+            const res = await fetch(metarUrl);
+            if(!res.ok) throw new Error("Proxy connection failed.");
             
-            const metar = data[0]; 
+            const rawJsonText = await res.text();
+            let data;
+            try {
+                data = JSON.parse(rawJsonText);
+            } catch(e) {
+                throw new Error("Invalid response received from proxy.");
+            }
+            
+            if(!data || data.length === 0) throw new Error(`No recent METAR found for ${icao}.`);
+            const metar = data[0];
 
-            // 1. UPDATE RAW METAR TEXT BOX
-            metarBox.innerText = metar.rawOb || "Raw text not available.";
+            // Display Raw Text
+            metarBox.innerText = metar.rawOb || "Raw string missing.";
 
-            // 2. CENTER ADS-B EXCHANGE MAP
-            if (metar.lat && metar.lon) {
-                document.getElementById(`adsb-iframe-${type}`).src = `https://globe.adsbexchange.com/?lat=${metar.lat}&lon=${metar.lon}&zoom=11`;
+            // Flight Category Parsing
+            let ceilVal = 99999;
+            if(metar.clouds) {
+                for(let layer of metar.clouds) {
+                    if(['BKN','OVC','VV'].includes(layer.cover)) {
+                        ceilVal = layer.base || 0; break;
+                    }
+                }
+            }
+            
+            let visVal = 10;
+            if(metar.visib) {
+                let vStr = String(metar.visib).replace('+','');
+                if(vStr.includes('/')) {
+                    let parts = vStr.split('/');
+                    if(parts.length===2) visVal = parseInt(parts[0])/parseInt(parts[1]);
+                } else {
+                    visVal = parseFloat(vStr);
+                }
             }
 
-            // 3. FETCH TAF
-            const tafUrl = `https://aviationweather.gov/api/data/taf?ids=${icao}&format=raw`;
-            const tafText = await robustFetchText(tafUrl);
-            if (tafText && tafText.length > 5) {
-                tafBox.innerText = tafText;
+            // Apply ForeFlight Colors
+            const flightCategory = determineFlightCategory(ceilVal, visVal);
+            metarBox.classList.add(flightCategory);
+
+            // Update Maps & Timezone
+            if(metar.lat && metar.lon) {
+                if(mapFrame) mapFrame.src = `https://globe.adsbexchange.com/?lat=${metar.lat}&lon=${metar.lon}&zoom=11`;
+                updateAirportTimezone(metar.lat, metar.lon, type);
+                
+                // If Departure, update SkyVector on EnVironment Tab
+                if(type === 'dep') {
+                    const secFrame = document.getElementById('sectional-iframe');
+                    if(secFrame) secFrame.src = `https://skyvector.com/?ll=${metar.lat},${metar.lon}&chart=301&zoom=1`;
+                }
             }
 
-            // 4. MINIMUMS LOGIC (Only applies to Departure)
-            if (type === 'dep') {
+            // TAF Fetch (Independent)
+            try {
+                const tafTarget = `https://aviationweather.gov/api/data/taf?ids=${icao}&format=raw`;
+                const tafUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(tafTarget)}`;
+                const tafRes = await fetch(tafUrl);
+                if(tafRes.ok) {
+                    const tafText = await tafRes.text();
+                    if(tafText.length > 5) tafBox.innerText = tafText;
+                    else tafBox.innerText = "No TAF reported.";
+                }
+            } catch(e) { tafBox.innerText = "TAF fetch failed."; }
+
+            // Departure Specific Minimums Logic
+            if(type === 'dep') {
                 const windSpd = metar.wspd || 0;
                 const windGust = metar.wgst || 0;
                 const maxReportedWind = Math.max(windSpd, windGust);
+                
                 document.getElementById('live-wind').innerText = `${windSpd} kt` + (windGust > 0 ? ` G${windGust}` : '');
-                let isWindGo = maxReportedWind <= userSettings.maxWind;
+                let isWindGo = maxReportedWind <= appState.maxWind;
                 setBadge('badge-wind', isWindGo);
 
                 const windDir = metar.wdir || null;
-                let crosswind = calculateCrosswind(windDir, maxReportedWind, userSettings.rwy); 
+                let crosswind = calculateCrosswind(windDir, maxReportedWind, appState.rwy); 
                 document.getElementById('live-xwind').innerText = windDir ? `${crosswind} kt` : 'VRB';
-                let isXwindGo = crosswind <= userSettings.maxXwind;
+                let isXwindGo = crosswind <= appState.maxXwind;
                 setBadge('badge-xwind', isXwindGo);
 
-                let ceilingValue = 99999; 
-                if (metar.clouds) {
-                    for (let layer of metar.clouds) {
-                        if (['BKN', 'OVC', 'VV'].includes(layer.cover)) {
-                            ceilingValue = layer.base || 0;
-                            break; 
-                        }
-                    }
-                }
-                document.getElementById('live-ceil').innerText = ceilingValue === 99999 ? "Unlimited" : `${ceilingValue} ft`;
-                let isCeilGo = ceilingValue >= userSettings.minCeil;
+                document.getElementById('live-ceil').innerText = ceilVal === 99999 ? "Unlimited" : `${ceilVal} ft`;
+                let isCeilGo = ceilVal >= appState.minCeil;
                 setBadge('badge-ceil', isCeilGo);
 
-                // MASTER STATUS UPDATE
+                // Master Decision
                 const masterGo = isWindGo && isXwindGo && isCeilGo;
                 const mText = document.getElementById('master-status-text');
                 const mBox = document.getElementById('master-decision-box');
@@ -398,33 +581,37 @@
                     mBox.style.background = "linear-gradient(135deg, #7f1d1d, #ef4444)";
                     mBox.style.borderColor = "#b91c1c";
                 }
-                document.getElementById('metar-time').innerText = `Report Time: ${metar.obsTime || 'Unknown'}`;
+                
+                const timeEl = document.getElementById('metar-time');
+                if (timeEl) timeEl.innerText = `Report Time: ${metar.obsTime || 'Unknown'}`;
             }
 
         } catch (error) {
-            console.error(error);
+            console.error(`${type} fetch error:`, error);
             metarBox.innerText = `Error: ${error.message}`;
-            if (type === 'dep') {
-                document.getElementById('live-wind').innerText = "--"; 
-                document.getElementById('live-ceil').innerText = "--"; 
-                document.getElementById('live-xwind').innerText = "--";
+            tafBox.innerText = '';
+            
+            if(type === 'dep') {
+                setBadge('badge-wind', false); setBadge('badge-ceil', false); setBadge('badge-xwind', false);
                 document.getElementById('master-status-text').innerText = "NO-GO";
                 document.getElementById('master-decision-box').style.background = "linear-gradient(135deg, #7f1d1d, #ef4444)";
             }
         }
     }
 
-    async function checkWeather() {
-        if (userSettings.depIcao) await fetchAirportData(userSettings.depIcao, 'dep');
-        if (userSettings.arrIcao) await fetchAirportData(userSettings.arrIcao, 'arr');
-    }
-
-    // Initialize on page load
-    updateUI(); 
-    checkWeather(); 
+    // --- 7. STARTUP ---
+    updateStaticUI();
+    updateClocks();
     
-    // Refresh every 5 minutes
-    setInterval(checkWeather, 300000); 
+    // Initial fetch
+    if(appState.depIcao) fetchAirportData('dep', appState.depIcao);
+    if(appState.arrIcao) fetchAirportData('arr', appState.arrIcao);
+    
+    // Auto Refresh
+    setInterval(() => {
+        if(appState.depIcao) fetchAirportData('dep', appState.depIcao);
+        if(appState.arrIcao) fetchAirportData('arr', appState.arrIcao);
+    }, 300000); 
 </script>
 </body>
 </html>
